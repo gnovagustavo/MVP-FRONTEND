@@ -1,0 +1,75 @@
+body{
+    font-family: Arial, sans-serif;
+    background-color: rgb(9, 10, 15);
+    margin: 0;
+    text-align: center;
+    }
+    header{
+        background-color: rgb(18, 21, 30);
+            color: rgb(243, 198, 105);
+            padding: 30px;
+    }
+    header h1{
+        color: rgb(243, 198, 105) ;
+    }
+    header p{
+        font-size:18px;
+    }
+    p{
+        color: rgb(243, 198, 105);
+        margin: 0 auto;
+        max-width: 90%;
+        line-height: 1.6;
+    }
+    main{
+
+        background-color: rgb(18, 21, 30);
+                color: rgb(243, 198, 105);
+                width: 80%;
+                max-width: 800px;
+                margin:30px auto;
+                border-radius:15px;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+    main h2{
+        color: rgb(243, 198, 105);
+    }
+    main p{
+        color: rgb(243, 198, 105);
+        font-size: 16px;
+        line-height: 1.6;
+    }
+    button{
+        background-color: rgb(243, 198, 105);
+        color: #222;
+        border: none;
+        padding: 15px 30px;
+        font-size: 16px;
+        font-weight:bold;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+    button:hover{
+        background-color: rgb(243, 198, 105);
+
+    }
+    footer{
+            background-color: rgb(18, 21, 30);
+            color: rgb(243, 198, 105);
+            padding:20px;
+            margin-top:30px;
+
+    }
+.icone-topo {
+    display: block;
+    text-align: center;
+    font-size: 38px;    
+    color: #f3be7a;     
+    margin-bottom: 12px;
+}
+
+    .icone-botao {
+    margin-right: 8px;  
+    color: #11141a;     
+    font-size: 16px;
+    }
