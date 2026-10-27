@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- ================================================================= -->
+  <!-- BLOCO: CONFIGURAÇÕES DE CABEÇALHO (METADATOS E TÍTULO)           -->
+  <!-- Define a codificação de caracteres UTF-8, responsividade mobile  -->
+  <!-- e o título que aparece na aba do navegador.                      -->
+  <!-- ================================================================= -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RPG Campaign Manager</title>
+
+  <!-- ================================================================= -->
+  <!-- BLOCO: CARREGAMENTO DE ESTILOS E ÍCONES EXTERNOS                 -->
+  <!-- Importa o framework Tailwind CSS via CDN para estilização rápida -->
+  <!-- e a biblioteca Lucide Icons para renderizar ícones na interface. -->
+  <!-- ================================================================= -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    <!-- =============================================================== -->
+    <!-- BLOCO: ESTILOS PERSONALIZADOS E ANIMAÇÕES (CSS)                  -->
+    <!-- Define estilos customizados que complementam o Tailwind CSS,     -->
+    <!-- como barras de rolagem personalizadas, fontes retrô e animações. -->
+    <!-- =============================================================== -->
+    
+    /* Personalização da barra de rolagem geral da página */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+
+    /* Estilo de fonte de terminal/código */
+    .font-mono-code {
+      font-family: 'Fira Code', 'Courier New', Courier, monospace;
+    }
+
+    /* Animações personalizadas para o Terminal de Logs */
+    @keyframes pulse-slow {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .animate-pulse-slow {
+      animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    <!-- =============================================================== -->
+    <!-- FIM DO BLOCO DE ESTILOS CSS                                     -->
+    <!-- =============================================================== -->
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-indigo-500 selection:text-white">
+
+  <!-- =================================================================== -->
+  <!-- BLOCO: BARRA DE NAVEGAÇÃO PRINCIPAL (HEADER)                        -->
+  <!-- Contém a marca/logo do sistema, indicação de versão e botões de    -->
+  <!-- navegação rápida entre os módulos do painel.                       -->
+  <!-- =================================================================== -->
+  <header class="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <!-- Logo e Título do App -->
+      <div class="flex items-center space-x-3">
+        <div class="p-2 bg-indigo-600/20 text-indigo-400 rounded-lg border border-indigo-500/30">
+          <i data-lucide="shield"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg text-slate-100 leading-tight">RPG Campaign Manager</h1>
+          <p class="text-xs text-slate-400">Sistema de Gestão Ordem Paranormal / Tormenta</p>
+        </div>
+      </div>
+
+      <!-- Navegação de Abas -->
+      <nav class="flex space-x-1 sm:space-x-2">
+        <button onclick="switchTab('personagens')" id="tab-btn-personagens" class="px-3 py-2 text-sm font-medium rounded-md flex items-center space-x-2 transition bg-indigo-600 text-white">
+          <i data-lucide="users" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Personagens</span>
+        </button>
+        <button onclick="switchTab('faccoes')" id="tab-btn-faccoes" class="px-3 py-2 text-sm font-medium rounded-md flex items-center space-x-2 transition text-slate-400 hover:text-slate-200 hover:bg-slate-800">
+          <i data-lucide="swords" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Facções</span>
+        </button>
+        <button onclick="switchTab('eventos')" id="tab-btn-eventos" class="px-3 py-2 text-sm font-medium rounded-md flex items-center space-x-2 transition text-slate-400 hover:text-slate-200 hover:bg-slate-800">
+          <i data-lucide="scroll" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Eventos</span>
+        </button>
+        <button onclick="switchTab('terminal')" id="tab-btn-terminal" class="px-3 py-2 text-sm font-medium rounded-md flex items-center space-x-2 transition text-slate-400 hover:text-slate-200 hover:bg-slate-800">
+          <i data-lucide="terminal" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Console Python</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+  <!-- =================================================================== -->
+  <!-- FIM DO BLOCO DA BARRA DE NAVEGAÇÃO                                  -->
+  <!-- =================================================================== -->
+
+
+  <!-- =================================================================== -->
+  <!-- BLOCO: CONTEÚDO PRINCIPAL (LAYOUT DAS ABAS DO PAINEL)              -->
+  <!-- Renderiza dinamicamente cada tela (Personagens, Facções, Eventos,    -->
+  <!-- e Console Terminal) baseado na aba selecionada pelo usuário.       -->
+  <!-- =================================================================== -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- ----------------------------------------------------------------- -->
+    <!-- SUB-BLOCO: ABA DE GESTÃO DE PERSONAGENS                           -->
+    <!-- Exibe formulário para criar agentes/personagens e a lista de      -->
+    <!-- personagens cadastrados com nível e barra de progresso NEX.       -->
+    <!-- ----------------------------------------------------------------- -->
+    <section id="view-personagens" class="space-y-6">
+      <div class="flex justify-between items-center">
+        <div>
+          <h2 class="text-xl font-bold text-slate-100">Agentes e Personagens</h2>
+          <p class="text-sm text-slate-400">Gerencie a evolução, NEX e patente dos integrantes do grupo.</p>
+        </div>
+        <button onclick="openModalPersonagem()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium text-sm flex items-center space-x-2 shadow-lg shadow-indigo-600/20 transition">
+          <i data-lucide="user-plus" class="w-4 h-4"></i>
+          <span>Novo Personagem</span>
+        </button>
+      </div>
+
+      <!-- Grid de Cards de Personagens -->
+      <div id="grid-personagens" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Renderizado dinamicamente via JS -->
+      </div>
+    </section>
+
+    <!-- ----------------------------------------------------------------- -->
+    <!-- SUB-BLOCO: ABA DE GESTÃO DE FACÇÕES                               -->
+    <!-- Exibe o status diplomático, alianças e reputação com facções     -->
+    <!-- do cenário.                                                       -->
+    <!-- ----------------------------------------------------------------- -->
+    <section id="view-faccoes" class="space-y-6 hidden">
+      <div class="flex justify-between items-center">
+        <div>
+          <h2 class="text-xl font-bold text-slate-100">Facções e Organizações</h2>
+          <p class="text-sm text-slate-400">Controle o nível de reputação, diplomacia e prestígio.</p>
+        </div>
+        <button onclick="openModalFaccao()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium text-sm flex items-center space-x-2 shadow-lg shadow-indigo-600/20 transition">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          <span>Nova Facção</span>
+        </button>
+      </div>
+
+      <!-- Grid de Cards de Facções -->
+      <div id="grid-faccoes" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Renderizado dinamicamente via JS -->
+      </div>
+    </section>
+
+    <!-- ----------------------------------------------------------------- -->
+    <!-- SUB-BLOCO: ABA DE EVENTOS DA CAMPANHA                             -->
+    <!-- Registra missões, combates ou marcos de história e concede NEX    -->
+    <!-- ou altera reputação automaticamente.                              -->
+    <!-- ----------------------------------------------------------------- -->
+    <section id="view-eventos" class="space-y-6 hidden">
+      <div class="flex justify-between items-center">
+        <div>
+          <h2 class="text-xl font-bold text-slate-100">Histórico de Eventos & Missões</h2>
+          <p class="text-sm text-slate-400">Registre acontecimentos relevantes da campanha.</p>
+        </div>
+        <button onclick="openModalEvento()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium text-sm flex items-center space-x-2 shadow-lg shadow-indigo-600/20 transition">
+          <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+          <span>Registrar Evento</span>
+        </button>
+      </div>
+
+      <!-- Lista de Eventos Cadastrados -->
+      <div id="lista-eventos" class="space-y-3">
+        <!-- Renderizado dinamicamente via JS -->
+      </div>
+    </section>
+
+    <!-- ----------------------------------------------------------------- -->
+    <!-- SUB-BLOCO: CONSOLE RETRÔ DE EXECUÇÕES PYTHON (TERMINAL LOG)       -->
+    <!-- Exibe em tempo real o log de código Python sendo executado        -->
+    <!-- em simulação no backend.                                          -->
+    <!-- ----------------------------------------------------------------- -->
+    <section id="view-terminal" class="space-y-4 hidden">
+      <div class="flex justify-between items-center">
+        <div>
+          <h2 class="text-xl font-bold text-slate-100">Console de Logs (Simulação Python)</h2>
+          <p class="text-sm text-slate-400">Visualização em tempo real das funções `personagens.py`, `faccoes.py` e `eventos.py`.</p>
+        </div>
+        <button onclick="limparTerminal()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs font-mono flex items-center space-x-1 border border-slate-700">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          <span>Limpar Log</span>
+        </button>
+      </div>
+
+      <!-- Painel estilo Terminal CLI -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-2xl font-mono-code text-xs">
+        <div class="bg-slate-800/60 px-4 py-2 border-b border-slate-800 flex items-center justify-between text-slate-400">
+          <div class="flex items-center space-x-2">
+            <span class="w-3 h-3 rounded-full bg-red-500 inline-block"></span>
+            <span class="w-3 h-3 rounded-full bg-yellow-500 inline-block"></span>
+            <span class="w-3 h-3 rounded-full bg-green-500 inline-block"></span>
+            <span class="ml-2 text-slate-300">rpg_system_backend.py - Output</span>
+          </div>
+          <span class="text-[10px] text-slate-500">Python 3.11.4 - Simulated Environment</span>
+        </div>
+        <div id="terminal-body" class="p-4 h-96 overflow-y-auto space-y-2 text-slate-300">
+          <p class="text-slate-500">[INFO] Sistema inicializado com sucesso. Aguardando comandos...</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+  <!-- =================================================================== -->
+  <!-- FIM DO CONTEÚDO PRINCIPAL                                           -->
+  <!-- =================================================================== -->
+
+
+  <!-- =================================================================== -->
+  <!-- BLOCO: ESTRUTURAS MODAIS (JANELAS POPUP PARA FORMULÁRIOS)          -->
+  <!-- =================================================================== -->
+
+  <!-- Modal: Criar/Editar Personagem -->
+  <div id="modal-personagem" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-xl p-6 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-lg text-slate-100">Adicionar Personagem</h3>
+        <button onclick="closeModal('modal-personagem')" class="text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
+      </div>
+      <form id="form-personagem" onsubmit="salvarPersonagem(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Nome do Agente / Personagem</label>
+          <input type="text" id="p-nome" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Classe / Trilha</label>
+          <input type="text" id="p-classe" placeholder="Ex: Combatente, Ocultista, Especialista" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">NEX Inicial (%)</label>
+            <input type="number" id="p-nex" min="0" max="100" value="5" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Pontos de Vida (PV)</label>
+            <input type="number" id="p-pv" min="1" value="20" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+          </div>
+        </div>
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" onclick="closeModal('modal-personagem')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm">Cancelar</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Adicionar NEX a um Personagem -->
+  <div id="modal-add-nex" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-xl p-6 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-lg text-slate-100">Evoluir NEX</h3>
+        <button onclick="closeModal('modal-add-nex')" class="text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
+      </div>
+      <form id="form-add-nex" onsubmit="confirmarAddNex(event)" class="space-y-4">
+        <input type="hidden" id="nex-personagem-id">
+        <div>
+          <p id="nex-personagem-nome" class="text-sm font-semibold text-indigo-400 mb-2"></p>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Quantidade de NEX a Adicionar (%)</label>
+          <input type="number" id="nex-valor" min="1" max="100" value="5" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" onclick="closeModal('modal-add-nex')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm">Cancelar</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium">Aplicar NEX</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Criar Facção -->
+  <div id="modal-faccao" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-xl p-6 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-lg text-slate-100">Nova Facção</h3>
+        <button onclick="closeModal('modal-faccao')" class="text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
+      </div>
+      <form id="form-faccao" onsubmit="salvarFaccao(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Nome da Organização</label>
+          <input type="text" id="f-nome" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Descrição / Filosofia</label>
+          <textarea id="f-descricao" rows="2" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"></textarea>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Reputação Inicial (-100 a +100)</label>
+          <input type="number" id="f-reputacao" min="-100" max="100" value="0" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" onclick="closeModal('modal-faccao')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm">Cancelar</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium">Salvar Facção</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Criar Evento -->
+  <div id="modal-evento" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-xl p-6 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-lg text-slate-100">Registrar Evento da História</h3>
+        <button onclick="closeModal('modal-evento')" class="text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
+      </div>
+      <form id="form-evento" onsubmit="salvarEvento(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Título do Evento / Missão</label>
+          <input type="text" id="e-titulo" placeholder="Ex: Investigação no Mansão Assombrada" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Descrição</label>
+          <textarea id="e-descricao" rows="2" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Recompensa NEX (+%)</label>
+            <input type="number" id="e-nex" min="0" max="100" value="5" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Facção Afetada</label>
+            <select id="e-faccao" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+              <option value="">Nenhuma</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Ajuste de Reputação</label>
+          <input type="number" id="e-rep-delta" min="-50" max="50" value="0" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" onclick="closeModal('modal-evento')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm">Cancelar</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium">Registrar Evento</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <!-- =================================================================== -->
+  <!-- FIM DO BLOCO DE MODAIS                                              -->
+  <!-- =================================================================== -->
+
+
+  <!-- =================================================================== -->
+  <!-- BLOCO: LÓGICA JAVASCRIPT & MOTOR DA APLICAÇÃO                       -->
+  <!-- Gerencia o estado da aplicação, persistência em localStorage,        -->
+  <!-- cálculos de regras de RPG e simulação do backend Python.           -->
+  <!-- =================================================================== -->
+  <script>
+    <!-- ----------------------------------------------------------------- -->
+    <!-- SUB-BLOCO JS: INICIALIZAÇÃO DE ESTADO E ARMAZENAMENTO LOCAL       -->
+    <!-- ----------------------------------------------------------------- -->
+    
+    // Recupera dados salvos do localStorage ou define valores padrão
+    let state = {
+      personagens: JSON.parse(localStorage.getItem('rpg_personagens')) || [
+        { id: '1', nome: 'Agente Tristan', classe: 'Combatente', nex: 15, pv: 28 },
+        { id: '2', nome: 'Dra. Beatrice', classe: 'Ocultista', nex: 20, pv: 18 },
+        { id: '3', nome: 'Kaelen', classe: 'Especialista', nex: 10, pv: 22 }
+      ],
+      faccoes: JSON.parse(localStorage.getItem('rpg_faccoes')) || [
+        { id: '1', nome: 'Ordem do Crisântemo', descricao: 'Defensores da realidade e investigadores paranormais.', reputacao: 45 },
+        { id: '2', nome: 'Culto da Espiral', descricao: 'Fanáticos em busca da transcendência a qualquer custo.', reputacao: -60 }
+      ],
+      eventos: JSON.parse(localStorage.getItem('rpg_eventos')) || [
+        { id: '1', titulo: 'Incidente no Necrotério', descricao: 'Primeiro confronto com criaturas de Sangue.', nexGanha: 5, faccaoId: '1', repDelta: 10, data: '2026-03-20' }
+      ]
+    };
+
+    // Função para salvar estado atualizado no LocalStorage
+    function saveState() {
+      localStorage.setItem('rpg_personagens', JSON.stringify(state.personagens));
+      localStorage.setItem('rpg_faccoes', JSON.stringify(state.faccoes));
+      localStorage.setItem('rpg_eventos', JSON.stringify(state.eventos));
+    }
+
+    <!-- ----------------------------------------------------------------- -->
+    <!-- SUB-BLOCO JS: SIMULADOR DE LOGS DE BACKEND (PYTHON CLI)           -->
+    <!-- ----------------------------------------------------------------- -->
+    function logPython(modulo, acao, detalhe) {
+      const timestamp = new Date().toLocaleTimeString();
+      const terminal = document.getElementById('terminal-body');
+      
+      const logEntry = document.createElement('div');
+      logEntry.className = 'border-l-2 border-indigo-500 pl-2 py-1 my-1 bg-slate-800/40 rounded-r';
+      logEntry.innerHTML = `
+        <div class="flex items-center space-x-2 text-[11px]">
+          <span class="text-slate-500">[${timestamp}]</span>
+          <span class="text-indigo-400 font-bold">${modulo}.py</span>
+          <span class="text-emerald-400">-> ${acao}</span>
+        </div>
+        <div class="text-slate-300 text-xs mt-0.5">${detalhe}</div>
+      `;
+      
+      terminal.appendChild(logEntry);
+      terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    function limparTerminal() {
+      document.getElementById('terminal-body').innerHTML = '<p class="text-slate-500">[INFO] Terminal limpo.</p>';
+    }
+
+    <!-- ----------------------------------------------------------------- -->
+    <!-- SUB-BLOCO JS: NAVEGAÇÃO DE ABAS                                   -->
+    <!-- ----------------------------------------------------------------- -->
+    function switchTab(tabId) {
+      ['personagens', 'faccoes', 'eventos', 'terminal'].forEach(t => {
+        document.getElementById(`view-${t}`).classList.add('hidden');
+        const btn = document.getElementById(`tab-btn-${t}`);
+        btn.classList.remove('bg-indigo-600', 'text-white');
+        btn.classList.add('text-slate-400', 'hover:text-slate-200', 'hover:bg-slate-800');
+      });
+
+      document.getElementById(`view-${tabId}`).classList.remove('hidden');
+      const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+      activeBtn.classList.remove('text-slate-400', 'hover:text-slate-200', 'hover:bg-slate-800');
+      activeBtn.classList.add('bg-indigo-600', 'text-white');
+
+      logPython('ui_router', 'SWITCH_TAB', `Navegando para a visualização: ${tabId.toUpperCase()}`);
+    }
+
+    <!-- ----------------------------------------------------------------- -->
+    <!-- SUB-BLOCO JS: REGRAS E MÓDULO DE PERSONAGENS (personagens.py)      -->
+    <!-- ----------------------------------------------------------------- -->
+    function calcularNivel(nex) {
+      // Regra: A cada 5% de NEX o agente ganha 1 nível (Simulando Ordem Paranormal)
+      return Math.floor(nex / 5) + 1;
+    }
+
+    function renderPersonagens() {
+      const container = document.getElementById('grid-personagens');
+      container.innerHTML = '';
+
+      state.personagens.forEach(p => {
+        const nivel = calcularNivel(p.nex);
+        const card = document.createElement('div');
+        card.className = 'bg-slate-900 border border-slate-800 rounded-xl p-5 hover:border-slate-700 transition space-y-4 shadow-lg';
+        card.innerHTML = `
+          <div class="flex justify-between items-start">
+            <div>
+              <h3 class="font-bold text-slate-100 text-base">${p.nome}</h3>
+              <p class="text-xs text-indigo-400 font-medium">${p.classe}</p>
+            </div>
+            <span class="px-2.5 py-1 bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 rounded-full text-xs font-semibold">
+              Nível ${nivel}
+            </span>
+          </div>
+
+          <!-- Barra de Progresso NEX -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs text-slate-400">
+              <span>NEX Paranormal</span>
+              <span class="font-mono font-bold text-slate-200">${p.nex}%</span>
+            </div>
+            <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+              <div class="bg-gradient-to-r from-indigo-500 to-purple-500 h-full transition-all duration-500" style="width: ${Math.min(p.nex, 100)}%"></div>
+            </div>
+          </div>
+
+          <div class="flex justify-between items-center pt-2 border-t border-slate-800/80 text-xs">
+            <span class="text-slate-400">Pontos de Vida: <strong class="text-red-400">${p.pv} HP</strong></span>
+            <div class="flex space-x-2">
+              <button onclick="openModalAddNex('${p.id}')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs flex items-center space-x-1 border border-slate-700">
+                <i data-lucide="zap" class="w-3 h-3 text-yellow-400"></i>
+                <span>+ NEX</span>
+              </button>
+              <button onclick="deletarPersonagem('${p.id}')" class="p-1 text-slate-500 hover:text-red-400 rounded">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+      lucide.createIcons();
+    }
+
+    function salvarPersonagem(e) {
+      e.preventDefault();
+      const novo = {
+        id: Date.now().toString(),
+        nome: document.getElementById('p-nome').value,
+        classe: document.getElementById('p-classe').value,
+        nex: parseInt(document.getElementById('p-nex').value) || 0,
+        pv: parseInt(document.getElementById('p-pv').value) || 10
+      };
+
+      state.personagens.push(novo);
+      saveState();
+      renderPersonagens();
+      closeModal('modal-personagem');
+      document.getElementById('form-personagem').reset();
+
+      logPython('personagens', 'CRIAR_PERSONAGEM', `Personagem registrado: ${novo.nome} (${novo.classe}), NEX Inicial: ${novo.nex}%`);
+    }
+
+    function openModalAddNex(id) {
+      const p = state.personagens.find(x => x.id === id);
+      if (!p) return;
+      document.getElementById('nex-personagem-id').value = p.id;
+      document.getElementById('nex-personagem-nome').innerText = `Agente: ${p.nome} (NEX Atual: ${p.nex}%)`;
+      document.getElementById('modal-add-nex').classList.remove('hidden');
+    }
+
+    function confirmarAddNex(e) {
+      e.preventDefault();
+      const id = document.getElementById('nex-personagem-id').value;
+      const val = parseInt(document.getElementById('nex-valor').value) || 0;
+      const p = state.personagens.find(x => x.id === id);
+
+      if (p) {
+        const nexAntigo = p.nex;
+        p.nex = Math.min(100, p.nex + val);
+        saveState();
+        renderPersonagens();
+        closeModal('modal-add-nex');
+        logPython('personagens', 'EVOLUIR_NEX', `NEX de ${p.nome} alterado de ${nexAntigo}% para ${p.nex}% (+${val}%)`);
+      }
+    }
+
+    function deletarPersonagem(id) {
+      const p = state.personagens.find(x => x.id === id);
+      state.personagens = state.personagens.filter(x => x.id !== id);
+      saveState();
+      renderPersonagens();
+      if (p) logPython('personagens', 'DELETAR_PERSONAGEM', `Removido personagem: ${p.nome}`);
+    }
+
+    <!-- ----------------------------------------------------------------- -->
+    <!-- SUB-BLOCO JS: REGRAS E MÓDULO DE FACÇÕES (faccoes.py)              -->
+    <!-- ----------------------------------------------------------------- -->
+    function getStatusReputacao(rep) {
+      if (rep >= 50) return { label: 'Aliado Leal', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' };
+      if (rep > 10) return { label: 'Amigável', color: 'text-green-400 bg-green-500/10 border-green-500/30' };
+      if (rep >= -10) return { label: 'Neutro', color: 'text-slate-400 bg-slate-500/10 border-slate-500/30' };
+      if (rep > -50) return { label: 'Hostil', color: 'text-orange-400 bg-orange-500/10 border-orange-500/30' };
+      return { label: 'Inimigo Declarado', color: 'text-red-400 bg-red-500/10 border-red-500/30' };
+    }
+
+    function renderFaccoes() {
+      const container = document.getElementById('grid-faccoes');
+      const selectEvento = document.getElementById('e-faccao');
+      
+      container.innerHTML = '';
+      selectEvento.innerHTML = '<option value="">Nenhuma</option>';
+
+      state.faccoes.forEach(f => {
+        const status = getStatusReputacao(f.reputacao);
+        
+        // Preenche grid
+        const card = document.createElement('div');
+        card.className = 'bg-slate-900 border border-slate-800 rounded-xl p-5 hover:border-slate-700 transition space-y-3 shadow-lg';
+        card.innerHTML = `
+          <div class="flex justify-between items-start">
+            <h3 class="font-bold text-slate-100 text-base">${f.nome}</h3>
+            <span class="px-2.5 py-1 border rounded-full text-xs font-semibold ${status.color}">
+              ${status.label}
+            </span>
+          </div>
+          <p class="text-xs text-slate-400 line-clamp-2">${f.descricao || 'Sem descrição cadastrada.'}</p>
+          <div class="pt-3 border-t border-slate-800 flex justify-between items-center">
+            <span class="text-xs text-slate-400">Reputação: <strong class="text-slate-200">${f.reputacao} pts</strong></span>
+            <div class="flex space-x-1">
+              <button onclick="ajustarReputacao('${f.id}', -5)" class="p-1 hover:bg-slate-800 text-red-400 rounded border border-slate-700">-5</button>
+              <button onclick="ajustarReputacao('${f.id}', 5)" class="p-1 hover:bg-slate-800 text-emerald-400 rounded border border-slate-700">+5</button>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+
+        // Preenche select do modal de evento
+        const opt = document.createElement('option');
+        opt.value = f.id;
+        opt.innerText = f.nome;
+        selectEvento.appendChild(opt);
+      });
+    }
+
+    function salvarFaccao(e) {
+      e.preventDefault();
+      const nova = {
+        id: Date.now().toString(),
+        nome: document.getElementById('f-nome').value,
+        descricao: document.getElementById('f-descricao').value,
+        reputacao: parseInt(document.getElementById('f-reputacao').value) || 0
+      };
+
+      state.faccoes.push(nova);
+      saveState();
+      renderFaccoes();
+      closeModal('modal-faccao');
+      document.getElementById('form-faccao').reset();
+
+      logPython('faccoes', 'CRIAR_FACCAO', `Organização registrada: ${nova.nome} (Reputação Inicial: ${nova.reputacao})`);
+    }
+
+    function ajustarReputacao(id, delta) {
+      const f = state.faccoes.find(x => x.id === id);
+      if (f) {
+        f.reputacao = Math.max(-100, Math.min(100, f.reputacao + delta));
+        saveState();
+        renderFaccoes();
+        logPython('faccoes', 'AJUSTAR_REPUTACAO', `Reputação de "${f.nome}" alterada em ${delta} -> Atual: ${f.reputacao}`);
+      }
+    }
+
+    <!-- ----------------------------------------------------------------- -->
+    <!-- SUB-BLOCO JS: REGRAS E MÓDULO DE EVENTOS (eventos.py)              -->
+    <!-- ----------------------------------------------------------------- -->
+    function renderEventos() {
+      const container = document.getElementById('lista-eventos');
+      container.innerHTML = '';
+
+      if (state.eventos.length === 0) {
+        container.innerHTML = '<p class="text-sm text-slate-500 italic py-4">Nenhum evento registrado ainda.</p>';
+        return;
+      }
+
+      state.eventos.slice().reverse().forEach(ev => {
+        const faccao = state.faccoes.find(f => f.id === ev.faccaoId);
+        const item = document.createElement('div');
+        item.className = 'bg-slate-900 border border-slate-800 rounded-lg p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3';
+        item.innerHTML = `
+          <div class="space-y-1">
+            <div class="flex items-center space-x-2">
+              <h4 class="font-bold text-slate-200 text-sm">${ev.titulo}</h4>
+              <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded">${ev.data}</span>
+            </div>
+            <p class="text-xs text-slate-400">${ev.descricao}</p>
+          </div>
+          <div class="flex items-center space-x-3 text-xs shrink-0">
+            ${ev.nexGanha > 0 ? `<span class="text-yellow-400 font-mono">+${ev.nexGanha}% NEX Todos</span>` : ''}
+            ${faccao ? `<span class="text-indigo-400 font-mono">${faccao.nome} (${ev.repDelta > 0 ? '+' : ''}${ev.repDelta})</span>` : ''}
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function salvarEvento(e) {
+      e.preventDefault();
+      const nexGanha = parseInt(document.getElementById('e-nex').value) || 0;
+      const faccaoId = document.getElementById('e-faccao').value;
+      const repDelta = parseInt(document.getElementById('e-rep-delta').value) || 0;
+
+      const novo = {
+        id: Date.now().toString(),
+        titulo: document.getElementById('e-titulo').value,
+        descricao: document.getElementById('e-descricao').value,
+        nexGanha: nexGanha,
+        faccaoId: faccaoId,
+        repDelta: repDelta,
+        data: new Date().toISOString().split('T')[0]
+      };
+
+      // Aplicação automática dos efeitos do evento
+      if (nexGanha > 0) {
+        state.personagens.forEach(p => {
+          p.nex = Math.min(100, p.nex + nexGanha);
+        });
+      }
+
+      if (faccaoId && repDelta !== 0) {
+        const fac = state.faccoes.find(f => f.id === faccaoId);
+        if (fac) {
+          fac.reputacao = Math.max(-100, Math.min(100, fac.reputacao + repDelta));
+        }
+      }
+
+      state.eventos.push(novo);
+      saveState();
+      renderPersonagens();
+      renderFaccoes();
+      renderEventos();
+      closeModal('modal-evento');
+      document.getElementById('form-evento').reset();
+
+      logPython('eventos', 'REGISTRAR_EVENTO', `Evento: "${novo.titulo}". Recompensas aplicadas globalmente.`);
+    }
+
+    <!-- ----------------------------------------------------------------- -->
+    <!-- SUB-BLOCO JS: HELPERS DE UI E MODAIS                             -->
+    <!-- ----------------------------------------------------------------- -->
+    function openModalPersonagem() { document.getElementById('modal-personagem').classList.remove('hidden'); }
+    function openModalFaccao() { document.getElementById('modal-faccao').classList.remove('hidden'); }
+    function openModalEvento() { document.getElementById('modal-evento').classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    // Inicialização ao carregar a página
+    document.addEventListener('DOMContentLoaded', () => {
+      renderPersonagens();
+      renderFaccoes();
+      renderEventos();
+      lucide.createIcons();
+      logPython('core', 'INIT', 'Aplicação carregada e estado inicial sincronizado.');
+    });
+    <!-- =============================================================== -->
+    <!-- FIM DO BLOCO DE CÓDIGO JAVASCRIPT                               -->
+    <!-- =============================================================== -->
+  </script>
+</body>
+</html>
