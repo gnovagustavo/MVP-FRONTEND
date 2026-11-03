@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RPG Campaign Manager - Teste Real</title>
+
+  <!-- Tailwind CSS & Lucide Icons -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+    }
+  </script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--scroll-track); }
+    ::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hover); }
+
+    :root {
+      --scroll-track: #0f172a;
+      --scroll-thumb: #334155;
+      --scroll-thumb-hover: #475569;
+    }
+    .light {
+      --scroll-track: #f1f5f9;
+      --scroll-thumb: #cbd5e1;
+      --scroll-thumb-hover: #94a3b8;
+    }
+
+    /* ===== TEMA POR SISTEMA DE RPG (cores definidas aqui no CSS) ===== */
+    :root { --accent: #4f46e5; }                       /* padrão (sem campanha) */
+    [data-sistema="dnd"]        { --accent: #c4291c; }  /* D&D */
+    [data-sistema="tormenta20"] { --accent: #8d1f34; }  /* Tormenta 20 */
+    [data-sistema="cyberpunk"]  { --accent: #4ca8c8; }  /* Cyberpunk */
+    :root, [data-sistema] {
+      --accent-hover: color-mix(in srgb, var(--accent) 82%, white);
+      --accent-text:  color-mix(in srgb, var(--accent) 55%, white);
+      --accent-light: color-mix(in srgb, var(--accent) 60%, white);
+    }
+    body .bg-indigo-600 { background-color: var(--accent); }
+    body .hover\:bg-indigo-500:hover { background-color: var(--accent-hover); }
+    body .bg-indigo-600\/20 { background-color: color-mix(in srgb, var(--accent) 20%, transparent); }
+    body .bg-indigo-500\/10 { background-color: color-mix(in srgb, var(--accent) 12%, transparent); }
+    body .text-indigo-400, body .text-indigo-300 { color: var(--accent-text); }
+    body .border-indigo-500\/30 { border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+    body .border-indigo-500, body .focus\:border-indigo-500:focus { border-color: var(--accent); }
+    body .shadow-indigo-600\/20 { --tw-shadow-color: color-mix(in srgb, var(--accent) 25%, transparent); --tw-shadow: var(--tw-shadow-colored); }
+    body .from-indigo-500 { --tw-gradient-from: var(--accent) var(--tw-gradient-from-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+    body .to-purple-500 { --tw-gradient-to: var(--accent-light) var(--tw-gradient-to-position); }
+    body ::selection { background-color: var(--accent); color: #fff; }
+    .btn-campanha { border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent); color: var(--accent-text); }
+    .btn-campanha:hover { background: color-mix(in srgb, var(--accent) 15%, transparent); }
+    .sistema-card { border: 1px solid #334155; border-radius: .75rem; padding: .6rem; text-align: center; transition: .2s; }
+    input:checked + .sistema-card { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 15%, transparent); }
+
+    /* ===== INTERFACE INTEIRA COM O TOM DO SISTEMA (só quando há campanha selecionada) ===== */
+    html[data-sistema] {
+      --bg:        color-mix(in srgb, var(--accent)  7%, #020617);
+      --surface:   color-mix(in srgb, var(--accent) 13%, #0f172a);
+      --surface-2: color-mix(in srgb, var(--accent) 18%, #1e293b);
+      --line:      color-mix(in srgb, var(--accent) 30%, #1e293b);
+      --line-2:    color-mix(in srgb, var(--accent) 35%, #334155);
+      --scroll-track: var(--bg); --scroll-thumb: var(--line-2); --scroll-thumb-hover: var(--accent);
+    }
+    html[data-sistema] .bg-slate-950 { background-color: var(--bg); }
+    html[data-sistema] .bg-slate-900 { background-color: var(--surface); }
+    html[data-sistema] .bg-slate-900\/80 { background-color: color-mix(in srgb, var(--surface) 80%, transparent); }
+    html[data-sistema] .bg-slate-900\/50 { background-color: color-mix(in srgb, var(--surface) 50%, transparent); }
+    html[data-sistema] .bg-slate-800 { background-color: var(--surface-2); }
+    html[data-sistema] .bg-slate-800\/60 { background-color: color-mix(in srgb, var(--surface-2) 60%, transparent); }
+    html[data-sistema] .bg-slate-800\/40 { background-color: color-mix(in srgb, var(--surface-2) 40%, transparent); }
+    html[data-sistema] .hover\:bg-slate-700:hover { background-color: var(--line-2); }
+    html[data-sistema] .hover\:bg-slate-800:hover { background-color: var(--surface-2); }
+    html[data-sistema] .border-slate-800 { border-color: var(--line); }
+    html[data-sistema] .border-slate-700 { border-color: var(--line-2); }
+    body, header, footer, section div { transition: background-color .3s, border-color .3s; }
+
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 dark:bg-slate-950 dark:text-slate-100 light:bg-slate-50 light:text-slate-950 min-h-screen flex flex-col font-sans antialiased selection:bg-indigo-500 selection:text-white transition-colors duration-300">
+
+  <!-- NOTIFICAÇÕES TOAST CONTAINER -->
+  <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2 max-w-xs w-full pointer-events-none"></div>
+
+  <!-- =================================================================== -->
+  <!-- BLOCO: TELA DE LOGIN                                                -->
+  <!-- =================================================================== -->
+  <div id="login-screen" class="fixed inset-0 bg-slate-950 dark:bg-slate-950 light:bg-slate-100 z-50 flex items-center justify-center p-4 transition-colors duration-300">
+    <div class="bg-slate-900 dark:bg-slate-900 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 w-full max-w-md rounded-2xl p-8 shadow-2xl space-y-6">
+      <div class="text-center space-y-2">
+        <div class="inline-flex p-3 bg-indigo-600/20 text-indigo-400 rounded-xl border border-indigo-500/30">
+          <i data-lucide="shield" class="w-8 h-8"></i>
+        </div>
+        <h1 class="font-bold text-2xl text-slate-100 dark:text-slate-100 light:text-slate-900">RPG Campaign Manager</h1>
+        <p class="text-xs text-slate-400 dark:text-slate-400 light:text-slate-500">Acesse o painel de teste da campanha</p>
+      </div>
+
+      <form onsubmit="realizarLogin(event)" class="space-y-4">
+        <div id="login-error" class="hidden text-xs text-red-400 bg-red-950/40 border border-red-800 p-2.5 rounded-lg text-center">
+          Por favor, preencha o e-mail e a senha para acessar.
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 dark:text-slate-400 light:text-slate-600 mb-1">E-mail ou Usuário</label>
+          <input type="text" id="login-usuario" placeholder="mestre@rpg.com" class="w-full bg-slate-800 dark:bg-slate-800 light:bg-slate-50 border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-lg px-4 py-2.5 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 dark:text-slate-400 light:text-slate-600 mb-1">Senha</label>
+          <input type="password" id="login-senha" placeholder="••••••••" class="w-full bg-slate-800 dark:bg-slate-800 light:bg-slate-50 border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-lg px-4 py-2.5 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 focus:outline-none focus:border-indigo-500">
+        </div>
+        <button type="submit" id="btn-login-submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium text-sm shadow-lg shadow-indigo-600/20 transition flex justify-center items-center space-x-2">
+          <span>Entrar no Sistema</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- =================================================================== -->
+  <!-- BLOCO: BARRA DE NAVEGAÇÃO PRINCIPAL (HEADER)                        -->
+  <!-- =================================================================== -->
+  <header class="bg-slate-900/80 dark:bg-slate-900/80 light:bg-white/80 backdrop-blur-md border-b border-slate-800 dark:border-slate-800 light:border-slate-200 sticky top-0 z-40 transition-colors duration-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="p-2 bg-indigo-600/20 text-indigo-400 rounded-lg border border-indigo-500/30">
+          <i data-lucide="shield"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg text-slate-100 dark:text-slate-100 light:text-slate-900 leading-tight">RPG Campaign Manager</h1>
+          <p id="header-sub" class="text-xs text-slate-400 dark:text-slate-400 light:text-slate-500">Ambiente de Testes / Ordem Paranormal</p>
+        </div>
+      </div>
+
+      <nav class="flex space-x-1 sm:space-x-2">
+        <button onclick="openModalCampanha()" id="btn-nova-campanha" class="btn-campanha px-3 py-2 text-sm font-medium rounded-md flex items-center space-x-2 transition">
+          <i data-lucide="flag" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Nova Campanha</span>
+        </button>
+        <button onclick="switchTab('personagens')" id="tab-btn-personagens" class="px-3 py-2 text-sm font-medium rounded-md flex items-center space-x-2 transition bg-indigo-600 text-white">
+          <i data-lucide="users" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Personagens</span>
+        </button>
+        <button onclick="switchTab('faccoes')" id="tab-btn-faccoes" class="px-3 py-2 text-sm font-medium rounded-md flex items-center space-x-2 transition text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-200 hover:bg-slate-800 dark:hover:bg-slate-800 light:hover:bg-slate-100">
+          <i data-lucide="swords" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Facções</span>
+        </button>
+        <button onclick="switchTab('eventos')" id="tab-btn-eventos" class="px-3 py-2 text-sm font-medium rounded-md flex items-center space-x-2 transition text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-200 hover:bg-slate-800 dark:hover:bg-slate-800 light:hover:bg-slate-100">
+          <i data-lucide="scroll" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Eventos</span>
+        </button>
+        <button onclick="switchTab('mestre')" id="tab-btn-mestre" class="px-3 py-2 text-sm font-medium rounded-md flex items-center space-x-2 transition text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-200 hover:bg-slate-800 dark:hover:bg-slate-800 light:hover:bg-slate-100">
+          <i data-lucide="crown" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Mestre</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- =================================================================== -->
+  <!-- BLOCO: CONTEÚDO PRINCIPAL                                           -->
+  <!-- =================================================================== -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- Barra de campanha ativa -->
+    <div class="mb-6 bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-wrap items-center gap-3">
+      <i data-lucide="book-open" class="w-4 h-4 text-indigo-400"></i>
+      <select id="campanha-select" onchange="selecionarCampanha(this.value)" class="bg-slate-800 border border-slate-700 text-slate-100 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-indigo-500"></select>
+      <span id="campanha-badge" class="hidden px-2.5 py-1 bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 rounded-full text-xs font-semibold"></span>
+      <button id="btn-del-campanha" onclick="deletarCampanha()" title="Excluir campanha" class="hidden text-slate-500 hover:text-red-400 p-1 transition"><i data-lucide="trash" class="w-4 h-4"></i></button>
+      <p id="campanha-desc" class="w-full text-xs text-slate-400 hidden"></p>
+    </div>
+
+    <!-- Aba: Personagens -->
+    <section id="view-personagens" class="space-y-6">
+      <div class="flex justify-between items-center">
+        <div>
+          <h2 class="text-xl font-bold text-slate-100 dark:text-slate-100 light:text-slate-900">Agentes e Personagens</h2>
+          <p class="text-sm text-slate-400 dark:text-slate-400 light:text-slate-600">Gerencie a evolução, NEX e patente dos integrantes do grupo.</p>
+        </div>
+        <button onclick="openModalPersonagem()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium text-sm flex items-center space-x-2 shadow-lg shadow-indigo-600/20 transition">
+          <i data-lucide="user-plus" class="w-4 h-4"></i>
+          <span>Novo Personagem</span>
+        </button>
+      </div>
+      <div id="grid-personagens" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </section>
+
+    <!-- Aba: Facções -->
+    <section id="view-faccoes" class="space-y-6 hidden">
+      <div class="flex justify-between items-center">
+        <div>
+          <h2 class="text-xl font-bold text-slate-100 dark:text-slate-100 light:text-slate-900">Facções e Organizações</h2>
+          <p class="text-sm text-slate-400 dark:text-slate-400 light:text-slate-600">Controle o nível de reputação, diplomacia e prestígio.</p>
+        </div>
+        <button onclick="openModalFaccao()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium text-sm flex items-center space-x-2 shadow-lg shadow-indigo-600/20 transition">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          <span>Nova Facção</span>
+        </button>
+      </div>
+      <div id="grid-faccoes" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </section>
+
+    <!-- Aba: Eventos -->
+    <section id="view-eventos" class="space-y-6 hidden">
+      <div class="flex justify-between items-center">
+        <div>
+          <h2 class="text-xl font-bold text-slate-100 dark:text-slate-100 light:text-slate-900">Histórico de Eventos & Missões</h2>
+          <p class="text-sm text-slate-400 dark:text-slate-400 light:text-slate-600">Registre acontecimentos relevantes da campanha.</p>
+        </div>
+        <button onclick="openModalEvento()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium text-sm flex items-center space-x-2 shadow-lg shadow-indigo-600/20 transition">
+          <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+          <span>Registrar Evento</span>
+        </button>
+      </div>
+      <div id="lista-eventos" class="space-y-3"></div>
+    </section>
+
+    <!-- Aba: Mestre (documentos PDF / Excel) -->
+    <section id="view-mestre" class="space-y-6 hidden">
+      <div>
+        <h2 class="text-xl font-bold text-slate-100 dark:text-slate-100 light:text-slate-900">Documentos do Mestre</h2>
+        <p class="text-sm text-slate-400 dark:text-slate-400 light:text-slate-600">Suba PDFs e planilhas (XLS/XLSX) da campanha. Ficam salvos no navegador.</p>
+      </div>
+      <label id="dropzone" for="input-docs" class="block cursor-pointer border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-xl p-8 text-center transition bg-slate-900/50">
+        <i data-lucide="upload-cloud" class="w-8 h-8 mx-auto text-indigo-400 mb-2"></i>
+        <p class="text-sm text-slate-200 font-medium">Arraste os arquivos aqui ou clique para escolher</p>
+        <p class="text-xs text-slate-500 mt-1">PDF, XLS ou XLSX</p>
+        <input id="input-docs" type="file" multiple accept=".pdf,.xls,.xlsx,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="hidden" onchange="uploadDocs(this.files); this.value=''">
+      </label>
+      <div id="lista-docs" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </section>
+
+  </main>
+
+  <!-- =================================================================== -->
+  <!-- BLOCO: RODAPÉ COM SWITCH DE MODO ESCURO / CLARO                     -->
+  <!-- =================================================================== -->
+  <footer class="bg-slate-900/50 dark:bg-slate-900/50 light:bg-white/50 border-t border-slate-800 dark:border-slate-800 light:border-slate-200 py-4 mt-auto transition-colors duration-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400 dark:text-slate-400 light:text-slate-600">
+      <p>&copy; 2026 RPG Campaign Manager. MVP - Testes Front-End.</p>
+      
+      <!-- Switch de Modo Escuro / Claro -->
+      <div class="flex items-center space-x-3">
+        <div class="flex items-center space-x-1.5">
+          <i data-lucide="sun" class="w-4 h-4 text-amber-400"></i>
+          <span id="theme-label">Modo Escuro</span>
+        </div>
+        <button type="button" onclick="toggleDarkMode()" id="darkModeToggle" class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-indigo-600 transition-colors duration-200 ease-in-out focus:outline-none" role="switch" aria-checked="true">
+          <span id="darkModeToggleHandle" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out translate-x-5"></span>
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- =================================================================== -->
+  <!-- BLOCO: ESTRUTURAS MODAIS                                            -->
+  <!-- =================================================================== -->
+  <!-- Modal: Campanha -->
+  <div id="modal-campanha" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-xl p-6 shadow-2xl space-y-4 text-slate-100">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-lg">Nova Campanha</h3>
+        <button onclick="closeModal('modal-campanha')" class="text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
+      </div>
+      <form id="form-campanha" onsubmit="salvarCampanha(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Nome da Campanha</label>
+          <input type="text" id="c-nome" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Descrição</label>
+          <textarea id="c-descricao" rows="3" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"></textarea>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Sistema de RPG</label>
+          <div class="grid grid-cols-3 gap-2">
+            <label class="cursor-pointer"><input type="radio" name="c-sistema" value="dnd" class="sr-only" checked>
+              <div class="sistema-card" data-sistema="dnd"><span class="block h-1.5 rounded-full mb-2" style="background:var(--accent)"></span><strong class="text-sm">D&amp;D</strong><p class="text-[10px] text-slate-400">Fantasia clássica</p></div></label>
+            <label class="cursor-pointer"><input type="radio" name="c-sistema" value="tormenta20" class="sr-only">
+              <div class="sistema-card" data-sistema="tormenta20"><span class="block h-1.5 rounded-full mb-2" style="background:var(--accent)"></span><strong class="text-sm">Tormenta 20</strong><p class="text-[10px] text-slate-400">Fantasia brasileira</p></div></label>
+            <label class="cursor-pointer"><input type="radio" name="c-sistema" value="cyberpunk" class="sr-only">
+              <div class="sistema-card" data-sistema="cyberpunk"><span class="block h-1.5 rounded-full mb-2" style="background:var(--accent)"></span><strong class="text-sm">Cyberpunk</strong><p class="text-[10px] text-slate-400">Futuro distópico</p></div></label>
+          </div>
+        </div>
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" onclick="closeModal('modal-campanha')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm">Cancelar</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium">Criar e Selecionar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Personagem -->
+  <div id="modal-personagem" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-slate-900 dark:bg-slate-900 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 w-full max-w-md rounded-xl p-6 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 dark:border-slate-800 light:border-slate-200 pb-3">
+        <h3 class="font-bold text-lg text-slate-100 dark:text-slate-100 light:text-slate-900">Adicionar Personagem</h3>
+        <button onclick="closeModal('modal-personagem')" class="text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
+      </div>
+      <form id="form-personagem" onsubmit="salvarPersonagem(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Nome do Agente</label>
+          <input type="text" id="p-nome" required class="w-full bg-slate-800 dark:bg-slate-800 light:bg-slate-50 border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Classe / Trilha</label>
+          <input type="text" id="p-classe" placeholder="Ex: Combatente, Ocultista" required class="w-full bg-slate-800 dark:bg-slate-800 light:bg-slate-50 border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">NEX Inicial (%)</label>
+            <input type="number" id="p-nex" min="0" max="100" value="5" required class="w-full bg-slate-800 dark:bg-slate-800 light:bg-slate-50 border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 focus:outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Pontos de Vida (PV)</label>
+            <input type="number" id="p-pv" min="1" value="20" required class="w-full bg-slate-800 dark:bg-slate-800 light:bg-slate-50 border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 focus:outline-none focus:border-indigo-500">
+          </div>
+        </div>
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" onclick="closeModal('modal-personagem')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm">Cancelar</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Adicionar NEX -->
+  <div id="modal-add-nex" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-slate-900 dark:bg-slate-900 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 w-full max-w-sm rounded-xl p-6 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 dark:border-slate-800 light:border-slate-200 pb-3">
+        <h3 class="font-bold text-lg text-slate-100 dark:text-slate-100 light:text-slate-900">Evoluir NEX</h3>
+        <button onclick="closeModal('modal-add-nex')" class="text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
+      </div>
+      <form id="form-add-nex" onsubmit="confirmarAddNex(event)" class="space-y-4">
+        <input type="hidden" id="nex-personagem-id">
+        <div>
+          <p id="nex-personagem-nome" class="text-sm font-semibold text-indigo-400 mb-2"></p>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Quantidade de NEX (%)</label>
+          <input type="number" id="nex-valor" min="1" max="100" value="5" required class="w-full bg-slate-800 dark:bg-slate-800 light:bg-slate-50 border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" onclick="closeModal('modal-add-nex')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm">Cancelar</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium">Aplicar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Facção -->
+  <div id="modal-faccao" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-slate-900 dark:bg-slate-900 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 w-full max-w-md rounded-xl p-6 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 dark:border-slate-800 light:border-slate-200 pb-3">
+        <h3 class="font-bold text-lg text-slate-100 dark:text-slate-100 light:text-slate-900">Nova Facção</h3>
+        <button onclick="closeModal('modal-faccao')" class="text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
+      </div>
+      <form id="form-faccao" onsubmit="salvarFaccao(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Nome</label>
+          <input type="text" id="f-nome" required class="w-full bg-slate-800 dark:bg-slate-800 light:bg-slate-50 border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Descrição</label>
+          <textarea id="f-descricao" rows="2" class="w-full bg-slate-800 dark:bg-slate-800 light:bg-slate-50 border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 focus:outline-none focus:border-indigo-500"></textarea>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Reputação (-100 a +100)</label>
+          <input type="number" id="f-reputacao" min="-100" max="100" value="0" required class="w-full bg-slate-800 dark:bg-slate-800 light:bg-slate-50 border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" onclick="closeModal('modal-faccao')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm">Cancelar</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Evento -->
+  <div id="modal-evento" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-slate-900 dark:bg-slate-900 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 w-full max-w-md rounded-xl p-6 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 dark:border-slate-800 light:border-slate-200 pb-3">
+        <h3 class="font-bold text-lg text-slate-100 dark:text-slate-100 light:text-slate-900">Registrar Evento</h3>
+        <button onclick="closeModal('modal-evento')" class="text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
+      </div>
+      <form id="form-evento" onsubmit="salvarEvento(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Título</label>
+          <input type="text" id="e-titulo" required class="w-full bg-slate-800 dark:bg-slate-800 light:bg-slate-50 border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Descrição</label>
+          <textarea id="e-descricao" rows="2" class="w-full bg-slate-800 dark:bg-slate-800 light:bg-slate-50 border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 focus:outline-none focus:border-indigo-500"></textarea>
+        </div>
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" onclick="closeModal('modal-evento')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm">Cancelar</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium">Registrar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =================================================================== -->
+  <!-- BLOCO: JAVASCRIPT & MOTOR DA APLICAÇÃO                              -->
+  <!-- =================================================================== -->
+  <script>
+    let state = {
+      personagens: JSON.parse(localStorage.getItem('rpg_personagens')) || [
+        { id: '1', nome: 'Agente Tristan', classe: 'Combatente', nex: 15, pv: 28 },
+        { id: '2', nome: 'Dra. Beatrice', classe: 'Ocultista', nex: 20, pv: 18 }
+      ],
+      faccoes: JSON.parse(localStorage.getItem('rpg_faccoes')) || [
+        { id: '1', nome: 'Ordem do Crisântemo', descricao: 'Investigadores paranormais.', reputacao: 45 }
+      ],
+      eventos: JSON.parse(localStorage.getItem('rpg_eventos')) || [],
+      campanhas: JSON.parse(localStorage.getItem('rpg_campanhas')) || []
+    };
+    let campanhaAtivaId = localStorage.getItem('rpg_campanha_ativa') || '';
+    const SISTEMAS = { dnd: 'D&D', tormenta20: 'Tormenta 20', cyberpunk: 'Cyberpunk' };
+
+    function saveState() {
+      localStorage.setItem('rpg_personagens', JSON.stringify(state.personagens));
+      localStorage.setItem('rpg_faccoes', JSON.stringify(state.faccoes));
+      localStorage.setItem('rpg_eventos', JSON.stringify(state.eventos));
+      localStorage.setItem('rpg_campanhas', JSON.stringify(state.campanhas));
+    }
+
+    // ===== CAMPANHAS: a cor da interface muda conforme o sistema da campanha selecionada =====
+    function renderCampanhas() {
+      const sel = document.getElementById('campanha-select');
+      sel.innerHTML = '';
+      sel.add(new Option('Sem campanha (padrão)', ''));
+      state.campanhas.forEach(c => sel.add(new Option(`${c.nome} — ${SISTEMAS[c.sistema]}`, c.id)));
+      const c = state.campanhas.find(x => x.id === campanhaAtivaId);
+      if (!c) campanhaAtivaId = '';
+      sel.value = campanhaAtivaId;
+
+      if (c) document.documentElement.dataset.sistema = c.sistema;
+      else delete document.documentElement.dataset.sistema;
+
+      const badge = document.getElementById('campanha-badge');
+      const desc = document.getElementById('campanha-desc');
+      badge.textContent = c ? SISTEMAS[c.sistema] : '';
+      badge.classList.toggle('hidden', !c);
+      desc.textContent = c ? c.descricao : '';
+      desc.classList.toggle('hidden', !c || !c.descricao);
+      document.getElementById('btn-del-campanha').classList.toggle('hidden', !c);
+      document.getElementById('header-sub').textContent = c ? `${c.nome} / ${SISTEMAS[c.sistema]}` : 'Ambiente de Testes / Ordem Paranormal';
+    }
+
+    function selecionarCampanha(id) {
+      campanhaAtivaId = id;
+      localStorage.setItem('rpg_campanha_ativa', id);
+      renderCampanhas();
+      renderPersonagens();
+      renderMestre();
+    }
+
+    function salvarCampanha(e) {
+      e.preventDefault();
+      const nova = {
+        id: Date.now().toString(),
+        nome: document.getElementById('c-nome').value.trim(),
+        descricao: document.getElementById('c-descricao').value.trim(),
+        sistema: document.querySelector('input[name="c-sistema"]:checked').value
+      };
+      state.campanhas.push(nova);
+      saveState();
+      selecionarCampanha(nova.id);
+      closeModal('modal-campanha');
+      document.getElementById('form-campanha').reset();
+      showToast(`Campanha ${nova.nome} criada (${SISTEMAS[nova.sistema]})!`);
+    }
+
+    function deletarCampanha() {
+      excluirDocsDaCampanha(campanhaAtivaId).catch(() => {});
+      state.campanhas = state.campanhas.filter(c => c.id !== campanhaAtivaId);
+      state.personagens = state.personagens.filter(p => (p.campanhaId || '') !== campanhaAtivaId);
+      saveState();
+      selecionarCampanha('');
+      showToast('Campanha removida.');
+    }
+
+    function openModalCampanha() { document.getElementById('modal-campanha').classList.remove('hidden'); }
+
+    // Exibir Toast de Notificação
+    function showToast(mensagem, tipo = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      const bg = tipo === 'success' ? 'bg-emerald-600' : 'bg-red-600';
+      
+      toast.className = `${bg} text-white text-xs px-4 py-3 rounded-lg shadow-lg flex items-center justify-between transition-all duration-300 opacity-0 transform translate-y-2 pointer-events-auto`;
+      toast.innerHTML = `<span>${mensagem}</span>`;
+      
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.classList.remove('opacity-0', 'translate-y-2');
+      }, 10);
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // Controle da Tela de Login
+    function realizarLogin(e) {
+      e.preventDefault();
+      const usr = document.getElementById('login-usuario').value.trim();
+      const pwd = document.getElementById('login-senha').value.trim();
+      const errorEl = document.getElementById('login-error');
+
+      if (!usr || !pwd) {
+        errorEl.classList.remove('hidden');
+        return;
+      }
+
+      errorEl.classList.add('hidden');
+      document.getElementById('login-screen').classList.add('hidden');
+      showToast('Login realizado com sucesso!');
+    }
+
+    // Controle de Modo Escuro / Claro com Persistência
+    function toggleDarkMode() {
+      const body = document.body;
+      const toggleBtn = document.getElementById('darkModeToggle');
+      const handle = document.getElementById('darkModeToggleHandle');
+      const label = document.getElementById('theme-label');
+
+      if (body.classList.contains('light')) {
+        body.classList.remove('light');
+        body.classList.add('dark');
+        toggleBtn.classList.remove('bg-slate-300');
+        toggleBtn.classList.add('bg-indigo-600');
+        handle.classList.remove('translate-x-0');
+        handle.classList.add('translate-x-5');
+        label.innerText = "Modo Escuro";
+        localStorage.setItem('rpg_theme', 'dark');
+      } else {
+        body.classList.remove('dark');
+        body.classList.add('light');
+        toggleBtn.classList.remove('bg-indigo-600');
+        toggleBtn.classList.add('bg-slate-300');
+        handle.classList.remove('translate-x-5');
+        handle.classList.add('translate-x-0');
+        label.innerText = "Modo Claro";
+        localStorage.setItem('rpg_theme', 'light');
+      }
+    }
+
+    function initTheme() {
+      const savedTheme = localStorage.getItem('rpg_theme');
+      if (savedTheme === 'light') {
+        toggleDarkMode();
+      }
+    }
+
+    function switchTab(tabId) {
+      ['personagens', 'faccoes', 'eventos', 'mestre'].forEach(t => {
+        document.getElementById(`view-${t}`).classList.add('hidden');
+        const btn = document.getElementById(`tab-btn-${t}`);
+        btn.classList.remove('bg-indigo-600', 'text-white');
+        btn.classList.add('text-slate-400', 'hover:text-slate-200', 'hover:bg-slate-800');
+      });
+
+      document.getElementById(`view-${tabId}`).classList.remove('hidden');
+      const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+      activeBtn.classList.remove('text-slate-400', 'hover:text-slate-200', 'hover:bg-slate-800');
+      activeBtn.classList.add('bg-indigo-600', 'text-white');
+
+    }
+
+    function renderPersonagens() {
+      const container = document.getElementById('grid-personagens');
+      container.innerHTML = '';
+      const lista = state.personagens.filter(p => (p.campanhaId || '') === campanhaAtivaId);
+      if (lista.length === 0) {
+        container.innerHTML = '<p class="text-slate-500 text-sm italic col-span-3">Nenhum personagem cadastrado nesta campanha.</p>';
+        return;
+      }
+      lista.forEach(p => {
+        const nivel = Math.floor(p.nex / 5) + 1;
+        const card = document.createElement('div');
+        card.className = 'bg-slate-900 text-slate-100 border border-slate-800 rounded-xl p-5 space-y-4 shadow-lg relative group';
+        card.innerHTML = `
+          <div class="flex justify-between items-start">
+            <div>
+              <h3 class="font-bold text-base">${p.nome}</h3>
+              <p class="text-xs text-indigo-400 font-medium">${p.classe}</p>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="px-2.5 py-1 bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 rounded-full text-xs font-semibold">Nível ${nivel}</span>
+              <button onclick="deletarPersonagem('${p.id}')" class="text-slate-500 hover:text-red-400 p-1 transition"><i data-lucide="trash" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs text-slate-400">
+              <span>NEX Paranormal</span>
+              <span class="font-mono font-bold text-slate-200">${p.nex}%</span>
+            </div>
+            <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+              <div class="bg-gradient-to-r from-indigo-500 to-purple-500 h-full" style="width: ${Math.min(p.nex, 100)}%"></div>
+            </div>
+          </div>
+          <div class="flex justify-between items-center pt-2 border-t border-slate-800 text-xs">
+            <span class="text-slate-400">Vida: <strong class="text-red-400">${p.pv} HP</strong></span>
+            <button onclick="openModalAddNex('${p.id}')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs border border-slate-700 flex items-center space-x-1">
+              <i data-lucide="zap" class="w-3 h-3 text-yellow-400"></i><span>+ NEX</span>
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+      lucide.createIcons();
+    }
+
+    function deletarPersonagem(id) {
+      state.personagens = state.personagens.filter(p => p.id !== id);
+      saveState();
+      renderPersonagens();
+      showToast('Personagem removido.');
+    }
+
+    function salvarPersonagem(e) {
+      e.preventDefault();
+      const novo = {
+        id: Date.now().toString(),
+        nome: document.getElementById('p-nome').value,
+        classe: document.getElementById('p-classe').value,
+        nex: parseInt(document.getElementById('p-nex').value) || 0,
+        pv: parseInt(document.getElementById('p-pv').value) || 10,
+        campanhaId: campanhaAtivaId
+      };
+      state.personagens.push(novo);
+      saveState();
+      renderPersonagens();
+      closeModal('modal-personagem');
+      document.getElementById('form-personagem').reset();
+      showToast(`Agente ${novo.nome} criado!`);
+    }
+
+    function openModalAddNex(id) {
+      const p = state.personagens.find(x => x.id === id);
+      if (!p) return;
+      document.getElementById('nex-personagem-id').value = p.id;
+      document.getElementById('nex-personagem-nome').innerText = `Agente: ${p.nome}`;
+      document.getElementById('modal-add-nex').classList.remove('hidden');
+    }
+
+    function confirmarAddNex(e) {
+      e.preventDefault();
+      const id = document.getElementById('nex-personagem-id').value;
+      const val = parseInt(document.getElementById('nex-valor').value) || 0;
+      const p = state.personagens.find(x => x.id === id);
+      if (p) {
+        p.nex = Math.min(100, p.nex + val);
+        saveState();
+        renderPersonagens();
+        closeModal('modal-add-nex');
+        showToast(`+${val}% de NEX adicionado a ${p.nome}`);
+      }
+    }
+
+    function renderFaccoes() {
+      const container = document.getElementById('grid-faccoes');
+      container.innerHTML = '';
+      if (state.faccoes.length === 0) {
+        container.innerHTML = '<p class="text-slate-500 text-sm italic col-span-3">Nenhuma facção cadastrada.</p>';
+        return;
+      }
+
+      state.faccoes.forEach(f => {
+        const card = document.createElement('div');
+        card.className = 'bg-slate-900 text-slate-100 border border-slate-800 rounded-xl p-5 space-y-3 shadow-lg';
+        card.innerHTML = `
+          <div class="flex justify-between items-start">
+            <h3 class="font-bold text-base">${f.nome}</h3>
+            <button onclick="deletarFaccao('${f.id}')" class="text-slate-500 hover:text-red-400 p-1 transition"><i data-lucide="trash" class="w-4 h-4"></i></button>
+          </div>
+          <p class="text-xs text-slate-400">${f.descricao}</p>
+          <div class="pt-3 border-t border-slate-800 text-xs">Reputação: <strong class="text-indigo-400">${f.reputacao} pts</strong></div>
+        `;
+        container.appendChild(card);
+      });
+      lucide.createIcons();
+    }
+
+    function deletarFaccao(id) {
+      state.faccoes = state.faccoes.filter(f => f.id !== id);
+      saveState();
+      renderFaccoes();
+      showToast('Facção removida.');
+    }
+
+    function salvarFaccao(e) {
+      e.preventDefault();
+      const nova = {
+        id: Date.now().toString(),
+        nome: document.getElementById('f-nome').value,
+        descricao: document.getElementById('f-descricao').value,
+        reputacao: parseInt(document.getElementById('f-reputacao').value) || 0
+      };
+      state.faccoes.push(nova);
+      saveState();
+      renderFaccoes();
+      closeModal('modal-faccao');
+      document.getElementById('form-faccao').reset();
+      showToast(`Facção ${nova.nome} adicionada!`);
+    }
+
+    function renderEventos() {
+      const container = document.getElementById('lista-eventos');
+      container.innerHTML = state.eventos.length === 0 ? '<p class="text-sm text-slate-500 italic py-4">Nenhum evento registrado.</p>' : '';
+      state.eventos.forEach(ev => {
+        const item = document.createElement('div');
+        item.className = 'bg-slate-900 text-slate-100 border border-slate-800 rounded-lg p-4 flex justify-between items-center shadow';
+        item.innerHTML = `<div><h4 class="font-bold text-sm">${ev.titulo}</h4><p class="text-xs text-slate-400">${ev.descricao}</p></div>`;
+        container.appendChild(item);
+      });
+    }
+
+    function salvarEvento(e) {
+      e.preventDefault();
+      const novo = {
+        id: Date.now().toString(),
+        titulo: document.getElementById('e-titulo').value,
+        descricao: document.getElementById('e-descricao').value
+      };
+      state.eventos.push(novo);
+      saveState();
+      renderEventos();
+      closeModal('modal-evento');
+      document.getElementById('form-evento').reset();
+      showToast('Evento registrado!');
+    }
+
+    function openModalPersonagem() { document.getElementById('modal-personagem').classList.remove('hidden'); }
+    function openModalFaccao() { document.getElementById('modal-faccao').classList.remove('hidden'); }
+    function openModalEvento() { document.getElementById('modal-evento').classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    // ===== MESTRE: documentos PDF/Excel salvos no IndexedDB (aguenta arquivos grandes) =====
+    const DB_NAME = 'rpg_mestre_db', STORE = 'documentos';
+    const MIMES = { pdf: 'application/pdf', xls: 'application/vnd.ms-excel', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' };
+    const esc = t => String(t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+    function dbOpen() {
+      return new Promise((res, rej) => {
+        const r = indexedDB.open(DB_NAME, 1);
+        r.onupgradeneeded = () => r.result.createObjectStore(STORE, { keyPath: 'id' });
+        r.onsuccess = () => res(r.result);
+        r.onerror = () => rej(r.error);
+      });
+    }
+    async function dbRun(mode, fn) {
+      const db = await dbOpen();
+      return new Promise((res, rej) => {
+        const tx = db.transaction(STORE, mode);
+        const req = fn(tx.objectStore(STORE));
+        tx.oncomplete = () => res(req ? req.result : undefined);
+        tx.onerror = () => rej(tx.error);
+      });
+    }
+    const docsAll = () => dbRun('readonly', st => st.getAll());
+
+    function fmtTamanho(b) {
+      return b < 1024 * 1024 ? (b / 1024).toFixed(0) + ' KB' : (b / 1024 / 1024).toFixed(1) + ' MB';
+    }
+
+    async function uploadDocs(files) {
+      let ok = 0;
+      for (const f of Array.from(files)) {
+        const ext = f.name.split('.').pop().toLowerCase();
+        if (!MIMES[ext]) { showToast(`"${f.name}" não é PDF/XLS/XLSX.`, 'error'); continue; }
+        try {
+          await dbRun('readwrite', st => st.put({
+            id: Date.now().toString() + Math.random().toString(36).slice(2, 6),
+            nome: f.name, ext, tamanho: f.size, data: new Date().toISOString(),
+            campanhaId: campanhaAtivaId,
+            blob: f.slice(0, f.size, MIMES[ext])
+          }));
+          ok++;
+        } catch (err) { showToast(`Erro ao salvar "${f.name}".`, 'error'); }
+      }
+      if (ok) showToast(`${ok} documento(s) salvo(s)!`);
+      if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
+      renderMestre();
+    }
+
+    async function renderMestre() {
+      const box = document.getElementById('lista-docs');
+      let docs = [];
+      try { docs = (await docsAll()).filter(d => (d.campanhaId || '') === campanhaAtivaId); } catch (e) {}
+      docs.sort((a, b) => b.data.localeCompare(a.data));
+      if (!docs.length) {
+        box.innerHTML = '<p class="text-slate-500 text-sm italic col-span-3">Nenhum documento nesta campanha.</p>';
+        return;
+      }
+      box.innerHTML = docs.map(d => {
+        const pdf = d.ext === 'pdf';
+        return `<div class="bg-slate-900 text-slate-100 border border-slate-800 rounded-xl p-4 space-y-3 shadow-lg">
+          <div class="flex items-start gap-3">
+            <div class="p-2 rounded-lg ${pdf ? 'bg-red-500/10 text-red-400' : 'bg-emerald-500/10 text-emerald-400'}"><i data-lucide="${pdf ? 'file-text' : 'file-spreadsheet'}" class="w-5 h-5"></i></div>
+            <div class="min-w-0 flex-1">
+              <h3 class="font-bold text-sm truncate" title="${esc(d.nome)}">${esc(d.nome)}</h3>
+              <p class="text-xs text-slate-400">${d.ext.toUpperCase()} · ${fmtTamanho(d.tamanho)} · ${new Date(d.data).toLocaleDateString('pt-BR')}</p>
+            </div>
+          </div>
+          <div class="flex justify-end gap-2 pt-2 border-t border-slate-800 text-xs">
+            ${pdf ? `<button onclick="abrirDoc('${d.id}')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded border border-slate-700 flex items-center gap-1"><i data-lucide="eye" class="w-3 h-3"></i>Abrir</button>` : ''}
+            <button onclick="baixarDoc('${d.id}')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded border border-slate-700 flex items-center gap-1"><i data-lucide="download" class="w-3 h-3"></i>Baixar</button>
+            <button onclick="excluirDoc('${d.id}')" class="text-slate-500 hover:text-red-400 p-1 transition" title="Excluir"><i data-lucide="trash" class="w-4 h-4"></i></button>
+          </div>
+        </div>`;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    async function pegarDoc(id) { return dbRun('readonly', st => st.get(id)); }
+    async function abrirDoc(id) {
+      const d = await pegarDoc(id); if (!d) return;
+      window.open(URL.createObjectURL(d.blob), '_blank');
+    }
+    async function baixarDoc(id) {
+      const d = await pegarDoc(id); if (!d) return;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(d.blob); a.download = d.nome;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+    }
+    async function excluirDoc(id) {
+      await dbRun('readwrite', st => st.delete(id));
+      renderMestre();
+      showToast('Documento removido.');
+    }
+    async function excluirDocsDaCampanha(cid) {
+      const docs = (await docsAll()).filter(d => (d.campanhaId || '') === cid);
+      for (const d of docs) await dbRun('readwrite', st => st.delete(d.id));
+    }
+
+    // arrastar e soltar
+    (() => {
+      const dz = document.getElementById('dropzone');
+      ['dragenter', 'dragover'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('border-indigo-500'); }));
+      ['dragleave', 'drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('border-indigo-500'); }));
+      dz.addEventListener('drop', e => uploadDocs(e.dataTransfer.files));
+    })();
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+      renderCampanhas();
+      renderPersonagens();
+      renderFaccoes();
+      renderEventos();
+      renderMestre();
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
