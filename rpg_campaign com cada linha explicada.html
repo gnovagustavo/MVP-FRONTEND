@@ -1,0 +1,1360 @@
+<!-- declara documento HTML5 -->
+<!DOCTYPE html>
+<!-- idioma pt-BR; class="dark" ativa o tema escuro do Tailwind -->
+<html lang="pt-BR" class="dark">
+<!-- configurações da página (não aparecem na tela) -->
+<head>
+  <!-- codificação UTF-8 (acentos) -->
+  <meta charset="UTF-8">
+  <!-- layout responsivo no celular -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- título da aba do navegador -->
+  <title>RPG Campaign Manager - Teste Real</title>
+
+  <!-- Tailwind CSS & Lucide Icons -->
+  <!-- carrega o Tailwind CSS (estilos por classes) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- configuração inline do Tailwind -->
+  <script>
+    // objeto de configuração do Tailwind
+    tailwind.config = {
+      // ativa o modo escuro por classe (class="dark")
+      darkMode: 'class',
+    }
+  </script>
+  <!-- carrega a biblioteca de ícones Lucide -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    ::-webkit-scrollbar { width: 8px; height: 8px; } /* barra de rolagem: 8px de largura/altura */
+    ::-webkit-scrollbar-track { background: var(--scroll-track); } /* trilho (fundo) da barra de rolagem */
+    ::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 4px; } /* "pegador" da barra, com cantos arredondados */
+    ::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hover); } /* pegador ao passar o mouse */
+
+    :root { /* variáveis globais (tema escuro) */
+      --scroll-track: #0f172a; /* cor do trilho */
+      --scroll-thumb: #334155; /* cor do pegador */
+      --scroll-thumb-hover: #475569; /* cor do pegador no hover */
+    }
+    .light { /* sobrescreve as variáveis no modo claro */
+      --scroll-track: #f1f5f9; /* trilho no modo claro */
+      --scroll-thumb: #cbd5e1; /* pegador no modo claro */
+      --scroll-thumb-hover: #94a3b8; /* pegador no hover (claro) */
+    }
+
+    /* ===== TEMA POR SISTEMA DE RPG (cores definidas aqui no CSS) ===== */
+    :root { --accent: #4f46e5; }                       /* padrão (sem campanha) */
+    [data-sistema="dnd"]        { --accent: #c4291c; }  /* D&D */
+    [data-sistema="tormenta20"] { --accent: #8d1f34; }  /* Tormenta 20 */
+    [data-sistema="cyberpunk"]  { --accent: #4ca8c8; }  /* Cyberpunk */
+    :root, [data-sistema] { /* cores derivadas da cor de destaque (--accent) */
+      --accent-hover: color-mix(in srgb, var(--accent) 82%, white); /* hover: mistura 82% da cor com branco */
+      --accent-text:  color-mix(in srgb, var(--accent) 55%, white); /* cor de texto: mistura com branco */
+      --accent-light: color-mix(in srgb, var(--accent) 60%, white); /* tom claro, usado no fim do gradiente */
+    }
+    body .bg-indigo-600 { background-color: var(--accent); } /* troca o indigo (roxo) dos botões pela cor do sistema */
+    body .hover\:bg-indigo-500:hover { background-color: var(--accent-hover); } /* hover dos botões */
+    body .bg-indigo-600\/20 { background-color: color-mix(in srgb, var(--accent) 20%, transparent); } /* fundo translúcido 20% */
+    body .bg-indigo-500\/10 { background-color: color-mix(in srgb, var(--accent) 12%, transparent); } /* fundo translúcido 12% (selos) */
+    body .text-indigo-400, body .text-indigo-300 { color: var(--accent-text); } /* textos em destaque */
+    body .border-indigo-500\/30 { border-color: color-mix(in srgb, var(--accent) 40%, transparent); } /* bordas dos selos */
+    body .border-indigo-500, body .focus\:border-indigo-500:focus { border-color: var(--accent); } /* bordas e foco dos campos */
+    body .shadow-indigo-600\/20 { --tw-shadow-color: color-mix(in srgb, var(--accent) 25%, transparent); --tw-shadow: var(--tw-shadow-colored); } /* cor da sombra dos botões */
+    body .from-indigo-500 { --tw-gradient-from: var(--accent) var(--tw-gradient-from-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); } /* início do gradiente da barra de NEX */
+    body .to-purple-500 { --tw-gradient-to: var(--accent-light) var(--tw-gradient-to-position); } /* fim do gradiente da barra de NEX */
+    body ::selection { background-color: var(--accent); color: #fff; } /* cor ao selecionar texto */
+    .btn-campanha { border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent); color: var(--accent-text); } /* botão Nova Campanha: borda e texto na cor do sistema */
+    .btn-campanha:hover { background: color-mix(in srgb, var(--accent) 15%, transparent); } /* hover do botão Nova Campanha */
+    .sistema-card { border: 1px solid #334155; border-radius: .75rem; padding: .6rem; text-align: center; transition: .2s; } /* cartão de opção de sistema (modal de campanha) */
+    input:checked + .sistema-card { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 15%, transparent); } /* opção marcada: borda e fundo na cor do sistema */
+
+    /* ===== INTERFACE INTEIRA COM O TOM DO SISTEMA (só quando há campanha selecionada) ===== */
+    html[data-sistema] { /* com campanha ativa, define a paleta tingida pelo sistema */
+      --bg:        color-mix(in srgb, var(--accent)  7%, #020617); /* fundo da página */
+      --surface:   color-mix(in srgb, var(--accent) 13%, #0f172a); /* superfície dos cartões */
+      --surface-2: color-mix(in srgb, var(--accent) 18%, #1e293b); /* superfície secundária (campos, barras) */
+      --line:      color-mix(in srgb, var(--accent) 30%, #1e293b); /* linhas e bordas */
+      --line-2:    color-mix(in srgb, var(--accent) 35%, #334155); /* bordas mais fortes */
+      --scroll-track: var(--bg); --scroll-thumb: var(--line-2); --scroll-thumb-hover: var(--accent); /* barra de rolagem acompanha a paleta */
+    }
+    html[data-sistema] .bg-slate-950 { background-color: var(--bg); } /* fundo da página (slate-950) usa --bg */
+    html[data-sistema] .bg-slate-900 { background-color: var(--surface); } /* cartões (slate-900) usam --surface */
+    html[data-sistema] .bg-slate-900\/80 { background-color: color-mix(in srgb, var(--surface) 80%, transparent); } /* cartões com 80% de opacidade */
+    html[data-sistema] .bg-slate-900\/50 { background-color: color-mix(in srgb, var(--surface) 50%, transparent); } /* cartões com 50% de opacidade */
+    html[data-sistema] .bg-slate-800 { background-color: var(--surface-2); } /* elementos slate-800 usam --surface-2 */
+    html[data-sistema] .bg-slate-800\/60 { background-color: color-mix(in srgb, var(--surface-2) 60%, transparent); } /* slate-800 a 60% */
+    html[data-sistema] .bg-slate-800\/40 { background-color: color-mix(in srgb, var(--surface-2) 40%, transparent); } /* slate-800 a 40% */
+    html[data-sistema] .hover\:bg-slate-700:hover { background-color: var(--line-2); } /* hover slate-700 */
+    html[data-sistema] .hover\:bg-slate-800:hover { background-color: var(--surface-2); } /* hover slate-800 */
+    html[data-sistema] .border-slate-800 { border-color: var(--line); } /* bordas slate-800 */
+    html[data-sistema] .border-slate-700 { border-color: var(--line-2); } /* bordas slate-700 */
+    body, header, footer, section div { transition: background-color .3s, border-color .3s; } /* transição suave de 0,3s ao trocar cores */
+
+  </style>
+</head>
+<!-- corpo da página: fundo/texto escuros, coluna ocupando a tela toda -->
+<body class="bg-slate-950 text-slate-100 dark:bg-slate-950 dark:text-slate-100 light:bg-slate-50 light:text-slate-950 min-h-screen flex flex-col font-sans antialiased selection:bg-indigo-500 selection:text-white transition-colors duration-300">
+
+  <!-- NOTIFICAÇÕES TOAST CONTAINER -->
+  <!-- caixa das notificações (toasts), no canto superior direito -->
+  <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2 max-w-xs w-full pointer-events-none"></div>
+
+  <!-- =================================================================== -->
+  <!-- BLOCO: TELA DE LOGIN                                                -->
+  <!-- =================================================================== -->
+  <!-- tela de login: cobre tudo até o usuário entrar -->
+  <div id="login-screen" class="fixed inset-0 bg-slate-950 dark:bg-slate-950 light:bg-slate-100 z-50 flex items-center justify-center p-4 transition-colors duration-300">
+    <!-- cartão centralizado do login -->
+    <div class="bg-slate-900 dark:bg-slate-900 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 w-full max-w-md rounded-2xl p-8 shadow-2xl space-y-6">
+      <!-- topo do login: ícone, título e subtítulo -->
+      <div class="text-center space-y-2">
+        <!-- caixinha arredondada do ícone -->
+        <div class="inline-flex p-3 bg-indigo-600/20 text-indigo-400 rounded-xl border border-indigo-500/30">
+          <!-- ícone 'shield' (Lucide) -->
+          <i data-lucide="shield" class="w-8 h-8"></i>
+        </div>
+        <!-- título do login -->
+        <h1 class="font-bold text-2xl text-slate-100 dark:text-slate-100 light:text-slate-900">RPG Campaign Manager</h1>
+        <!-- subtítulo do login -->
+        <p class="text-xs text-slate-400 dark:text-slate-400 light:text-slate-500">Acesse o painel de teste da campanha</p>
+      </div>
+
+      <!-- formulário de login; ao enviar chama realizarLogin -->
+      <form onsubmit="realizarLogin(event)" class="space-y-4">
+        <!-- aviso de erro (escondido até faltar e-mail/senha) -->
+        <div id="login-error" class="hidden text-xs text-red-400 bg-red-950/40 border border-red-800 p-2.5 rounded-lg text-center">
+          Por favor, preencha o e-mail e a senha para acessar.
+        </div>
+        <!-- agrupa os elementos abaixo -->
+        <div>
+          <!-- rótulo do campo abaixo -->
+          <label class="block text-xs font-medium text-slate-400 dark:text-slate-400 light:text-slate-600 mb-1">E-mail ou Usuário</label>
+          <!-- campo de e-mail/usuário -->
+          <input type="text" id="login-usuario" placeholder="mestre@rpg.com" class="w-full bg-slate-800 dark:bg-slate-800 light:bg-slate-50 border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-lg px-4 py-2.5 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 focus:outline-none focus:border-indigo-500">
+        </div>
+        <!-- agrupa os elementos abaixo -->
+        <div>
+          <!-- rótulo do campo abaixo -->
+          <label class="block text-xs font-medium text-slate-400 dark:text-slate-400 light:text-slate-600 mb-1">Senha</label>
+          <!-- campo de senha (texto oculto) -->
+          <input type="password" id="login-senha" placeholder="••••••••" class="w-full bg-slate-800 dark:bg-slate-800 light:bg-slate-50 border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-lg px-4 py-2.5 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 focus:outline-none focus:border-indigo-500">
+        </div>
+        <!-- botão Entrar (envia o formulário) -->
+        <button type="submit" id="btn-login-submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium text-sm shadow-lg shadow-indigo-600/20 transition flex justify-center items-center space-x-2">
+          <!-- texto do botão -->
+          <span>Entrar no Sistema</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- =================================================================== -->
+  <!-- BLOCO: BARRA DE NAVEGAÇÃO PRINCIPAL (HEADER)                        -->
+  <!-- =================================================================== -->
+  <!-- barra superior fixa (header) com efeito de vidro -->
+  <header class="bg-slate-900/80 dark:bg-slate-900/80 light:bg-white/80 backdrop-blur-md border-b border-slate-800 dark:border-slate-800 light:border-slate-200 sticky top-0 z-40 transition-colors duration-300">
+    <!-- limita a largura: logo à esquerda, menu à direita -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <!-- bloco do logo + nomes -->
+      <div class="flex items-center space-x-3">
+        <!-- caixinha do ícone do logo -->
+        <div class="p-2 bg-indigo-600/20 text-indigo-400 rounded-lg border border-indigo-500/30">
+          <!-- ícone 'shield' (Lucide) -->
+          <i data-lucide="shield"></i>
+        </div>
+        <!-- bloco dos textos do logo -->
+        <div>
+          <!-- nome do sistema -->
+          <h1 class="font-bold text-lg text-slate-100 dark:text-slate-100 light:text-slate-900 leading-tight">RPG Campaign Manager</h1>
+          <!-- subtítulo; vira o nome da campanha ativa -->
+          <p id="header-sub" class="text-xs text-slate-400 dark:text-slate-400 light:text-slate-500">Ambiente de Testes / Ordem Paranormal</p>
+        </div>
+      </div>
+
+      <!-- menu de navegação (abas) -->
+      <nav class="flex space-x-1 sm:space-x-2">
+        <!-- botão Nova Campanha: abre o modal de campanha -->
+        <button onclick="openModalCampanha()" id="btn-nova-campanha" class="btn-campanha px-3 py-2 text-sm font-medium rounded-md flex items-center space-x-2 transition">
+          <!-- ícone 'flag' (Lucide) -->
+          <i data-lucide="flag" class="w-4 h-4"></i>
+          <!-- texto do botão (some em telas pequenas) -->
+          <span class="hidden sm:inline">Nova Campanha</span>
+        </button>
+        <!-- aba Personagens (começa selecionada) -->
+        <button onclick="switchTab('personagens')" id="tab-btn-personagens" class="px-3 py-2 text-sm font-medium rounded-md flex items-center space-x-2 transition bg-indigo-600 text-white">
+          <!-- ícone 'users' (Lucide) -->
+          <i data-lucide="users" class="w-4 h-4"></i>
+          <!-- texto do botão (some em telas pequenas) -->
+          <span class="hidden sm:inline">Personagens</span>
+        </button>
+        <!-- aba Facções -->
+        <button onclick="switchTab('faccoes')" id="tab-btn-faccoes" class="px-3 py-2 text-sm font-medium rounded-md flex items-center space-x-2 transition text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-200 hover:bg-slate-800 dark:hover:bg-slate-800 light:hover:bg-slate-100">
+          <!-- ícone 'swords' (Lucide) -->
+          <i data-lucide="swords" class="w-4 h-4"></i>
+          <!-- texto do botão (some em telas pequenas) -->
+          <span class="hidden sm:inline">Facções</span>
+        </button>
+        <!-- aba Eventos -->
+        <button onclick="switchTab('eventos')" id="tab-btn-eventos" class="px-3 py-2 text-sm font-medium rounded-md flex items-center space-x-2 transition text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-200 hover:bg-slate-800 dark:hover:bg-slate-800 light:hover:bg-slate-100">
+          <!-- ícone 'scroll' (Lucide) -->
+          <i data-lucide="scroll" class="w-4 h-4"></i>
+          <!-- texto do botão (some em telas pequenas) -->
+          <span class="hidden sm:inline">Eventos</span>
+        </button>
+        <!-- aba Mestre (documentos PDF/Excel) -->
+        <button onclick="switchTab('mestre')" id="tab-btn-mestre" class="px-3 py-2 text-sm font-medium rounded-md flex items-center space-x-2 transition text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-200 hover:bg-slate-800 dark:hover:bg-slate-800 light:hover:bg-slate-100">
+          <!-- ícone 'crown' (Lucide) -->
+          <i data-lucide="crown" class="w-4 h-4"></i>
+          <!-- texto do botão (some em telas pequenas) -->
+          <span class="hidden sm:inline">Mestre</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- =================================================================== -->
+  <!-- BLOCO: CONTEÚDO PRINCIPAL                                           -->
+  <!-- =================================================================== -->
+  <!-- área principal do conteúdo -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- Barra de campanha ativa -->
+    <!-- barra da campanha ativa -->
+    <div class="mb-6 bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-wrap items-center gap-3">
+      <!-- ícone 'book-open' (Lucide) -->
+      <i data-lucide="book-open" class="w-4 h-4 text-indigo-400"></i>
+      <!-- lista suspensa para escolher a campanha -->
+      <select id="campanha-select" onchange="selecionarCampanha(this.value)" class="bg-slate-800 border border-slate-700 text-slate-100 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-indigo-500"></select>
+      <!-- selo com o sistema de RPG da campanha -->
+      <span id="campanha-badge" class="hidden px-2.5 py-1 bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 rounded-full text-xs font-semibold"></span>
+      <!-- botão lixeira: exclui a campanha ativa -->
+      <button id="btn-del-campanha" onclick="deletarCampanha()" title="Excluir campanha" class="hidden text-slate-500 hover:text-red-400 p-1 transition"><i data-lucide="trash" class="w-4 h-4"></i></button>
+      <!-- descrição da campanha -->
+      <p id="campanha-desc" class="w-full text-xs text-slate-400 hidden"></p>
+    </div>
+
+    <!-- Aba: Personagens -->
+    <!-- seção da aba Personagens -->
+    <section id="view-personagens" class="space-y-6">
+      <!-- linha com título à esquerda e botão à direita -->
+      <div class="flex justify-between items-center">
+        <!-- agrupa os elementos abaixo -->
+        <div>
+          <!-- título da seção -->
+          <h2 class="text-xl font-bold text-slate-100 dark:text-slate-100 light:text-slate-900">Agentes e Personagens</h2>
+          <!-- texto explicativo da seção -->
+          <p class="text-sm text-slate-400 dark:text-slate-400 light:text-slate-600">Gerencie a evolução, NEX e patente dos integrantes do grupo.</p>
+        </div>
+        <!-- botão Novo Personagem: abre o modal -->
+        <button onclick="openModalPersonagem()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium text-sm flex items-center space-x-2 shadow-lg shadow-indigo-600/20 transition">
+          <!-- ícone 'user-plus' (Lucide) -->
+          <i data-lucide="user-plus" class="w-4 h-4"></i>
+          <span>Novo Personagem</span>
+        </button>
+      </div>
+      <!-- grade onde o JavaScript desenha os cartões de personagens -->
+      <div id="grid-personagens" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </section>
+
+    <!-- Aba: Facções -->
+    <!-- seção da aba Facções (escondida) -->
+    <section id="view-faccoes" class="space-y-6 hidden">
+      <!-- linha com título à esquerda e botão à direita -->
+      <div class="flex justify-between items-center">
+        <!-- agrupa os elementos abaixo -->
+        <div>
+          <!-- título da seção -->
+          <h2 class="text-xl font-bold text-slate-100 dark:text-slate-100 light:text-slate-900">Facções e Organizações</h2>
+          <!-- texto explicativo da seção -->
+          <p class="text-sm text-slate-400 dark:text-slate-400 light:text-slate-600">Controle o nível de reputação, diplomacia e prestígio.</p>
+        </div>
+        <!-- botão Nova Facção: abre o modal -->
+        <button onclick="openModalFaccao()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium text-sm flex items-center space-x-2 shadow-lg shadow-indigo-600/20 transition">
+          <!-- ícone 'plus' (Lucide) -->
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          <span>Nova Facção</span>
+        </button>
+      </div>
+      <!-- grade onde o JavaScript desenha as facções -->
+      <div id="grid-faccoes" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </section>
+
+    <!-- Aba: Eventos -->
+    <!-- seção da aba Eventos (escondida) -->
+    <section id="view-eventos" class="space-y-6 hidden">
+      <!-- linha com título à esquerda e botão à direita -->
+      <div class="flex justify-between items-center">
+        <!-- agrupa os elementos abaixo -->
+        <div>
+          <!-- título da seção -->
+          <h2 class="text-xl font-bold text-slate-100 dark:text-slate-100 light:text-slate-900">Histórico de Eventos & Missões</h2>
+          <!-- texto explicativo da seção -->
+          <p class="text-sm text-slate-400 dark:text-slate-400 light:text-slate-600">Registre acontecimentos relevantes da campanha.</p>
+        </div>
+        <!-- botão Registrar Evento: abre o modal -->
+        <button onclick="openModalEvento()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium text-sm flex items-center space-x-2 shadow-lg shadow-indigo-600/20 transition">
+          <!-- ícone 'calendar-plus' (Lucide) -->
+          <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+          <span>Registrar Evento</span>
+        </button>
+      </div>
+      <!-- lista onde o JavaScript desenha os eventos -->
+      <div id="lista-eventos" class="space-y-3"></div>
+    </section>
+
+    <!-- Aba: Mestre (documentos PDF / Excel) -->
+    <!-- seção da aba Mestre (escondida) -->
+    <section id="view-mestre" class="space-y-6 hidden">
+      <!-- agrupa os elementos abaixo -->
+      <div>
+        <!-- título da seção -->
+        <h2 class="text-xl font-bold text-slate-100 dark:text-slate-100 light:text-slate-900">Documentos do Mestre</h2>
+        <!-- texto explicativo da seção -->
+        <p class="text-sm text-slate-400 dark:text-slate-400 light:text-slate-600">Suba PDFs e planilhas (XLS/XLSX) da campanha. Ficam salvos no navegador.</p>
+      </div>
+      <!-- área de soltar arquivos (clicável: abre o seletor) -->
+      <label id="dropzone" for="input-docs" class="block cursor-pointer border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-xl p-8 text-center transition bg-slate-900/50">
+        <!-- ícone 'upload-cloud' (Lucide) -->
+        <i data-lucide="upload-cloud" class="w-8 h-8 mx-auto text-indigo-400 mb-2"></i>
+        <!-- instrução da área de upload -->
+        <p class="text-sm text-slate-200 font-medium">Arraste os arquivos aqui ou clique para escolher</p>
+        <!-- formatos aceitos -->
+        <p class="text-xs text-slate-500 mt-1">PDF, XLS ou XLSX</p>
+        <!-- input de arquivo escondido: vários arquivos, só PDF/XLS/XLSX; chama uploadDocs e limpa o campo -->
+        <input id="input-docs" type="file" multiple accept=".pdf,.xls,.xlsx,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="hidden" onchange="uploadDocs(this.files); this.value=''">
+      </label>
+      <!-- grade onde o JavaScript desenha os cartões de documentos -->
+      <div id="lista-docs" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </section>
+
+  </main>
+
+  <!-- =================================================================== -->
+  <!-- BLOCO: RODAPÉ COM SWITCH DE MODO ESCURO / CLARO                     -->
+  <!-- =================================================================== -->
+  <!-- rodapé -->
+  <footer class="bg-slate-900/50 dark:bg-slate-900/50 light:bg-white/50 border-t border-slate-800 dark:border-slate-800 light:border-slate-200 py-4 mt-auto transition-colors duration-300">
+    <!-- alinha o texto e o switch de tema -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400 dark:text-slate-400 light:text-slate-600">
+      <!-- texto de copyright -->
+      <p>&copy; 2026 RPG Campaign Manager. MVP - Testes Front-End.</p>
+      
+      <!-- Switch de Modo Escuro / Claro -->
+      <!-- bloco do switch de tema -->
+      <div class="flex items-center space-x-3">
+        <!-- ícone + nome do tema atual -->
+        <div class="flex items-center space-x-1.5">
+          <!-- ícone 'sun' (Lucide) -->
+          <i data-lucide="sun" class="w-4 h-4 text-amber-400"></i>
+          <!-- texto do modo atual (Escuro/Claro) -->
+          <span id="theme-label">Modo Escuro</span>
+        </div>
+        <!-- botão-switch: alterna modo escuro/claro -->
+        <button type="button" onclick="toggleDarkMode()" id="darkModeToggle" class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-indigo-600 transition-colors duration-200 ease-in-out focus:outline-none" role="switch" aria-checked="true">
+          <!-- bolinha branca que desliza -->
+          <span id="darkModeToggleHandle" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out translate-x-5"></span>
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- =================================================================== -->
+  <!-- BLOCO: ESTRUTURAS MODAIS                                            -->
+  <!-- =================================================================== -->
+  <!-- Modal: Campanha -->
+  <!-- fundo escuro do modal (escondido); cobre a tela toda -->
+  <div id="modal-campanha" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <!-- caixa do modal -->
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-xl p-6 shadow-2xl space-y-4 text-slate-100">
+      <!-- cabeçalho do modal: título + botão fechar -->
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <!-- título do modal -->
+        <h3 class="font-bold text-lg">Nova Campanha</h3>
+        <!-- botão X: fecha o modal -->
+        <button onclick="closeModal('modal-campanha')" class="text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
+      </div>
+      <!-- formulário do modal; ao enviar chama a função de salvar -->
+      <form id="form-campanha" onsubmit="salvarCampanha(event)" class="space-y-4">
+        <!-- agrupa os elementos abaixo -->
+        <div>
+          <!-- rótulo do campo abaixo -->
+          <label class="block text-xs font-medium text-slate-400 mb-1">Nome da Campanha</label>
+          <!-- campo: nome da campanha (obrigatório) -->
+          <input type="text" id="c-nome" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+        </div>
+        <!-- agrupa os elementos abaixo -->
+        <div>
+          <!-- rótulo do campo abaixo -->
+          <label class="block text-xs font-medium text-slate-400 mb-1">Descrição</label>
+          <!-- campo: descrição (várias linhas) -->
+          <textarea id="c-descricao" rows="3" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"></textarea>
+        </div>
+        <!-- agrupa os elementos abaixo -->
+        <div>
+          <!-- rótulo do campo abaixo -->
+          <label class="block text-xs font-medium text-slate-400 mb-1">Sistema de RPG</label>
+          <!-- grade com as 3 opções de sistema -->
+          <div class="grid grid-cols-3 gap-2">
+            <!-- opção D&D (rádio escondido, marcada por padrão) -->
+            <label class="cursor-pointer"><input type="radio" name="c-sistema" value="dnd" class="sr-only" checked>
+              <!-- cartão visual do D&D, com barrinha na cor do sistema -->
+              <div class="sistema-card" data-sistema="dnd"><span class="block h-1.5 rounded-full mb-2" style="background:var(--accent)"></span><strong class="text-sm">D&amp;D</strong><p class="text-[10px] text-slate-400">Fantasia clássica</p></div></label>
+            <!-- opção Tormenta 20 (rádio escondido) -->
+            <label class="cursor-pointer"><input type="radio" name="c-sistema" value="tormenta20" class="sr-only">
+              <!-- cartão visual do Tormenta 20 -->
+              <div class="sistema-card" data-sistema="tormenta20"><span class="block h-1.5 rounded-full mb-2" style="background:var(--accent)"></span><strong class="text-sm">Tormenta 20</strong><p class="text-[10px] text-slate-400">Fantasia brasileira</p></div></label>
+            <!-- opção Cyberpunk (rádio escondido) -->
+            <label class="cursor-pointer"><input type="radio" name="c-sistema" value="cyberpunk" class="sr-only">
+              <!-- cartão visual do Cyberpunk -->
+              <div class="sistema-card" data-sistema="cyberpunk"><span class="block h-1.5 rounded-full mb-2" style="background:var(--accent)"></span><strong class="text-sm">Cyberpunk</strong><p class="text-[10px] text-slate-400">Futuro distópico</p></div></label>
+          </div>
+        </div>
+        <!-- linha dos botões, alinhada à direita -->
+        <div class="flex justify-end space-x-2 pt-2">
+          <!-- botão Cancelar: fecha o modal sem salvar -->
+          <button type="button" onclick="closeModal('modal-campanha')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm">Cancelar</button>
+          <!-- botão Criar e Selecionar (envia o formulário) -->
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium">Criar e Selecionar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Personagem -->
+  <!-- fundo escuro do modal (escondido); cobre a tela toda -->
+  <div id="modal-personagem" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <!-- caixa do modal -->
+    <div class="bg-slate-900 dark:bg-slate-900 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 w-full max-w-md rounded-xl p-6 shadow-2xl space-y-4">
+      <!-- cabeçalho do modal: título + botão fechar -->
+      <div class="flex justify-between items-center border-b border-slate-800 dark:border-slate-800 light:border-slate-200 pb-3">
+        <!-- título do modal -->
+        <h3 class="font-bold text-lg text-slate-100 dark:text-slate-100 light:text-slate-900">Adicionar Personagem</h3>
+        <!-- botão X: fecha o modal -->
+        <button onclick="closeModal('modal-personagem')" class="text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
+      </div>
+      <!-- formulário do modal; ao enviar chama a função de salvar -->
+      <form id="form-personagem" onsubmit="salvarPersonagem(event)" class="space-y-4">
+        <!-- agrupa os elementos abaixo -->
+        <div>
+          <!-- rótulo do campo abaixo -->
+          <label class="block text-xs font-medium text-slate-400 mb-1">Nome do Agente</label>
+          <!-- campo: nome do agente (obrigatório) -->
+          <input type="text" id="p-nome" required class="w-full bg-slate-800 dark:bg-slate-800 light:bg-slate-50 border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 focus:outline-none focus:border-indigo-500">
+        </div>
+        <!-- agrupa os elementos abaixo -->
+        <div>
+          <!-- rótulo do campo abaixo -->
+          <label class="block text-xs font-medium text-slate-400 mb-1">Classe / Trilha</label>
+          <!-- campo: classe/trilha (obrigatório) -->
+          <input type="text" id="p-classe" placeholder="Ex: Combatente, Ocultista" required class="w-full bg-slate-800 dark:bg-slate-800 light:bg-slate-50 border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 focus:outline-none focus:border-indigo-500">
+        </div>
+        <!-- grade de 2 colunas (NEX e PV) -->
+        <div class="grid grid-cols-2 gap-3">
+          <!-- agrupa os elementos abaixo -->
+          <div>
+            <!-- rótulo do campo abaixo -->
+            <label class="block text-xs font-medium text-slate-400 mb-1">NEX Inicial (%)</label>
+            <!-- campo: NEX inicial, de 0 a 100 -->
+            <input type="number" id="p-nex" min="0" max="100" value="5" required class="w-full bg-slate-800 dark:bg-slate-800 light:bg-slate-50 border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 focus:outline-none focus:border-indigo-500">
+          </div>
+          <!-- agrupa os elementos abaixo -->
+          <div>
+            <!-- rótulo do campo abaixo -->
+            <label class="block text-xs font-medium text-slate-400 mb-1">Pontos de Vida (PV)</label>
+            <!-- campo: pontos de vida (mínimo 1) -->
+            <input type="number" id="p-pv" min="1" value="20" required class="w-full bg-slate-800 dark:bg-slate-800 light:bg-slate-50 border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 focus:outline-none focus:border-indigo-500">
+          </div>
+        </div>
+        <!-- linha dos botões, alinhada à direita -->
+        <div class="flex justify-end space-x-2 pt-2">
+          <!-- botão Cancelar: fecha o modal sem salvar -->
+          <button type="button" onclick="closeModal('modal-personagem')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm">Cancelar</button>
+          <!-- botão que envia (salva) o formulário -->
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Adicionar NEX -->
+  <!-- fundo escuro do modal (escondido); cobre a tela toda -->
+  <div id="modal-add-nex" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <!-- caixa do modal -->
+    <div class="bg-slate-900 dark:bg-slate-900 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 w-full max-w-sm rounded-xl p-6 shadow-2xl space-y-4">
+      <!-- cabeçalho do modal: título + botão fechar -->
+      <div class="flex justify-between items-center border-b border-slate-800 dark:border-slate-800 light:border-slate-200 pb-3">
+        <!-- título do modal -->
+        <h3 class="font-bold text-lg text-slate-100 dark:text-slate-100 light:text-slate-900">Evoluir NEX</h3>
+        <!-- botão X: fecha o modal -->
+        <button onclick="closeModal('modal-add-nex')" class="text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
+      </div>
+      <!-- formulário do modal; ao enviar chama a função de salvar -->
+      <form id="form-add-nex" onsubmit="confirmarAddNex(event)" class="space-y-4">
+        <!-- campo escondido que guarda o id do personagem -->
+        <input type="hidden" id="nex-personagem-id">
+        <!-- agrupa os elementos abaixo -->
+        <div>
+          <!-- nome do personagem que vai evoluir -->
+          <p id="nex-personagem-nome" class="text-sm font-semibold text-indigo-400 mb-2"></p>
+          <!-- rótulo do campo abaixo -->
+          <label class="block text-xs font-medium text-slate-400 mb-1">Quantidade de NEX (%)</label>
+          <!-- campo: quanto de NEX somar -->
+          <input type="number" id="nex-valor" min="1" max="100" value="5" required class="w-full bg-slate-800 dark:bg-slate-800 light:bg-slate-50 border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 focus:outline-none focus:border-indigo-500">
+        </div>
+        <!-- linha dos botões, alinhada à direita -->
+        <div class="flex justify-end space-x-2 pt-2">
+          <!-- botão Cancelar: fecha o modal sem salvar -->
+          <button type="button" onclick="closeModal('modal-add-nex')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm">Cancelar</button>
+          <!-- botão que envia (salva) o formulário -->
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium">Aplicar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Facção -->
+  <!-- fundo escuro do modal (escondido); cobre a tela toda -->
+  <div id="modal-faccao" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <!-- caixa do modal -->
+    <div class="bg-slate-900 dark:bg-slate-900 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 w-full max-w-md rounded-xl p-6 shadow-2xl space-y-4">
+      <!-- cabeçalho do modal: título + botão fechar -->
+      <div class="flex justify-between items-center border-b border-slate-800 dark:border-slate-800 light:border-slate-200 pb-3">
+        <!-- título do modal -->
+        <h3 class="font-bold text-lg text-slate-100 dark:text-slate-100 light:text-slate-900">Nova Facção</h3>
+        <!-- botão X: fecha o modal -->
+        <button onclick="closeModal('modal-faccao')" class="text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
+      </div>
+      <!-- formulário do modal; ao enviar chama a função de salvar -->
+      <form id="form-faccao" onsubmit="salvarFaccao(event)" class="space-y-4">
+        <!-- agrupa os elementos abaixo -->
+        <div>
+          <!-- rótulo do campo abaixo -->
+          <label class="block text-xs font-medium text-slate-400 mb-1">Nome</label>
+          <!-- campo: nome da facção -->
+          <input type="text" id="f-nome" required class="w-full bg-slate-800 dark:bg-slate-800 light:bg-slate-50 border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 focus:outline-none focus:border-indigo-500">
+        </div>
+        <!-- agrupa os elementos abaixo -->
+        <div>
+          <!-- rótulo do campo abaixo -->
+          <label class="block text-xs font-medium text-slate-400 mb-1">Descrição</label>
+          <!-- campo: descrição da facção -->
+          <textarea id="f-descricao" rows="2" class="w-full bg-slate-800 dark:bg-slate-800 light:bg-slate-50 border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 focus:outline-none focus:border-indigo-500"></textarea>
+        </div>
+        <!-- agrupa os elementos abaixo -->
+        <div>
+          <!-- rótulo do campo abaixo -->
+          <label class="block text-xs font-medium text-slate-400 mb-1">Reputação (-100 a +100)</label>
+          <!-- campo: reputação de -100 a 100 -->
+          <input type="number" id="f-reputacao" min="-100" max="100" value="0" required class="w-full bg-slate-800 dark:bg-slate-800 light:bg-slate-50 border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 focus:outline-none focus:border-indigo-500">
+        </div>
+        <!-- linha dos botões, alinhada à direita -->
+        <div class="flex justify-end space-x-2 pt-2">
+          <!-- botão Cancelar: fecha o modal sem salvar -->
+          <button type="button" onclick="closeModal('modal-faccao')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm">Cancelar</button>
+          <!-- botão que envia (salva) o formulário -->
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Evento -->
+  <!-- fundo escuro do modal (escondido); cobre a tela toda -->
+  <div id="modal-evento" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <!-- caixa do modal -->
+    <div class="bg-slate-900 dark:bg-slate-900 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 w-full max-w-md rounded-xl p-6 shadow-2xl space-y-4">
+      <!-- cabeçalho do modal: título + botão fechar -->
+      <div class="flex justify-between items-center border-b border-slate-800 dark:border-slate-800 light:border-slate-200 pb-3">
+        <!-- título do modal -->
+        <h3 class="font-bold text-lg text-slate-100 dark:text-slate-100 light:text-slate-900">Registrar Evento</h3>
+        <!-- botão X: fecha o modal -->
+        <button onclick="closeModal('modal-evento')" class="text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
+      </div>
+      <!-- formulário do modal; ao enviar chama a função de salvar -->
+      <form id="form-evento" onsubmit="salvarEvento(event)" class="space-y-4">
+        <!-- agrupa os elementos abaixo -->
+        <div>
+          <!-- rótulo do campo abaixo -->
+          <label class="block text-xs font-medium text-slate-400 mb-1">Título</label>
+          <!-- campo: título do evento -->
+          <input type="text" id="e-titulo" required class="w-full bg-slate-800 dark:bg-slate-800 light:bg-slate-50 border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 focus:outline-none focus:border-indigo-500">
+        </div>
+        <!-- agrupa os elementos abaixo -->
+        <div>
+          <!-- rótulo do campo abaixo -->
+          <label class="block text-xs font-medium text-slate-400 mb-1">Descrição</label>
+          <!-- campo: descrição do evento -->
+          <textarea id="e-descricao" rows="2" class="w-full bg-slate-800 dark:bg-slate-800 light:bg-slate-50 border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 focus:outline-none focus:border-indigo-500"></textarea>
+        </div>
+        <!-- linha dos botões, alinhada à direita -->
+        <div class="flex justify-end space-x-2 pt-2">
+          <!-- botão Cancelar: fecha o modal sem salvar -->
+          <button type="button" onclick="closeModal('modal-evento')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm">Cancelar</button>
+          <!-- botão que envia (salva) o formulário -->
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium">Registrar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =================================================================== -->
+  <!-- BLOCO: JAVASCRIPT & MOTOR DA APLICAÇÃO                              -->
+  <!-- =================================================================== -->
+  <!-- início do JavaScript da aplicação -->
+  <script>
+    // estado da aplicação: lê do localStorage ou usa dados de exemplo
+    let state = {
+      // lista de personagens
+      personagens: JSON.parse(localStorage.getItem('rpg_personagens')) || [
+        // personagem de exemplo 1
+        { id: '1', nome: 'Agente Tristan', classe: 'Combatente', nex: 15, pv: 28 },
+        // personagem de exemplo 2
+        { id: '2', nome: 'Dra. Beatrice', classe: 'Ocultista', nex: 20, pv: 18 }
+      ],
+      // lista de facções
+      faccoes: JSON.parse(localStorage.getItem('rpg_faccoes')) || [
+        // facção de exemplo
+        { id: '1', nome: 'Ordem do Crisântemo', descricao: 'Investigadores paranormais.', reputacao: 45 }
+      ],
+      // eventos (começa vazio)
+      eventos: JSON.parse(localStorage.getItem('rpg_eventos')) || [],
+      // campanhas (começa vazio)
+      campanhas: JSON.parse(localStorage.getItem('rpg_campanhas')) || []
+    };
+    // id da campanha selecionada (lembrado entre visitas)
+    let campanhaAtivaId = localStorage.getItem('rpg_campanha_ativa') || '';
+    // nomes de exibição de cada sistema de RPG
+    const SISTEMAS = { dnd: 'D&D', tormenta20: 'Tormenta 20', cyberpunk: 'Cyberpunk' };
+
+    // salva tudo no localStorage
+    function saveState() {
+      // salva os personagens
+      localStorage.setItem('rpg_personagens', JSON.stringify(state.personagens));
+      // salva as facções
+      localStorage.setItem('rpg_faccoes', JSON.stringify(state.faccoes));
+      // salva os eventos
+      localStorage.setItem('rpg_eventos', JSON.stringify(state.eventos));
+      // salva as campanhas
+      localStorage.setItem('rpg_campanhas', JSON.stringify(state.campanhas));
+    }
+
+    // ===== CAMPANHAS: a cor da interface muda conforme o sistema da campanha selecionada =====
+    // redesenha o seletor de campanhas e aplica o tema
+    function renderCampanhas() {
+      // pega o <select> de campanhas
+      const sel = document.getElementById('campanha-select');
+      // limpa as opções
+      sel.innerHTML = '';
+      // primeira opção: sem campanha
+      sel.add(new Option('Sem campanha (padrão)', ''));
+      // adiciona uma opção por campanha
+      state.campanhas.forEach(c => sel.add(new Option(`${c.nome} — ${SISTEMAS[c.sistema]}`, c.id)));
+      // procura a campanha ativa
+      const c = state.campanhas.find(x => x.id === campanhaAtivaId);
+      // se ela não existe mais, volta ao padrão
+      if (!c) campanhaAtivaId = '';
+      // seleciona a opção no <select>
+      sel.value = campanhaAtivaId;
+
+      // aplica o tema do sistema no <html> (atributo data-sistema)
+      if (c) document.documentElement.dataset.sistema = c.sistema;
+      // sem campanha: remove o tema
+      else delete document.documentElement.dataset.sistema;
+
+      // pega o selo do sistema
+      const badge = document.getElementById('campanha-badge');
+      // pega a descrição
+      const desc = document.getElementById('campanha-desc');
+      // texto do selo
+      badge.textContent = c ? SISTEMAS[c.sistema] : '';
+      // mostra/esconde o selo
+      badge.classList.toggle('hidden', !c);
+      // texto da descrição
+      desc.textContent = c ? c.descricao : '';
+      // esconde a descrição se estiver vazia
+      desc.classList.toggle('hidden', !c || !c.descricao);
+      // mostra a lixeira só quando há campanha
+      document.getElementById('btn-del-campanha').classList.toggle('hidden', !c);
+      // atualiza o subtítulo do header
+      document.getElementById('header-sub').textContent = c ? `${c.nome} / ${SISTEMAS[c.sistema]}` : 'Ambiente de Testes / Ordem Paranormal';
+    }
+
+    // troca a campanha ativa
+    function selecionarCampanha(id) {
+      // guarda o id escolhido
+      campanhaAtivaId = id;
+      // lembra a escolha no localStorage
+      localStorage.setItem('rpg_campanha_ativa', id);
+      // redesenha seletor e tema
+      renderCampanhas();
+      // redesenha os personagens da campanha
+      renderPersonagens();
+      // redesenha os documentos da campanha
+      renderMestre();
+    }
+
+    // cria campanha ao enviar o formulário
+    function salvarCampanha(e) {
+      // impede recarregar a página
+      e.preventDefault();
+      // monta o objeto da nova campanha
+      const nova = {
+        // id único (data/hora atual)
+        id: Date.now().toString(),
+        // nome digitado
+        nome: document.getElementById('c-nome').value.trim(),
+        // descrição digitada
+        descricao: document.getElementById('c-descricao').value.trim(),
+        // sistema marcado nos botões de rádio
+        sistema: document.querySelector('input[name="c-sistema"]:checked').value
+      };
+      // adiciona à lista
+      state.campanhas.push(nova);
+      // salva
+      saveState();
+      // seleciona a campanha nova
+      selecionarCampanha(nova.id);
+      // fecha o modal
+      closeModal('modal-campanha');
+      // limpa o formulário
+      document.getElementById('form-campanha').reset();
+      // aviso de sucesso
+      showToast(`Campanha ${nova.nome} criada (${SISTEMAS[nova.sistema]})!`);
+    }
+
+    // exclui a campanha ativa
+    function deletarCampanha() {
+      // apaga os documentos dela (IndexedDB)
+      excluirDocsDaCampanha(campanhaAtivaId).catch(() => {});
+      // remove a campanha da lista
+      state.campanhas = state.campanhas.filter(c => c.id !== campanhaAtivaId);
+      // remove os personagens dela
+      state.personagens = state.personagens.filter(p => (p.campanhaId || '') !== campanhaAtivaId);
+      // salva
+      saveState();
+      // volta ao padrão (sem campanha)
+      selecionarCampanha('');
+      // aviso
+      showToast('Campanha removida.');
+    }
+
+    // abre o modal de nova campanha
+    function openModalCampanha() { document.getElementById('modal-campanha').classList.remove('hidden'); }
+
+    // Exibir Toast de Notificação
+    // mostra notificação temporária (tipo 'success' = verde, outro = vermelho)
+    function showToast(mensagem, tipo = 'success') {
+      // pega a caixa de notificações
+      const container = document.getElementById('toast-container');
+      // cria o elemento da notificação
+      const toast = document.createElement('div');
+      // cor conforme o tipo
+      const bg = tipo === 'success' ? 'bg-emerald-600' : 'bg-red-600';
+      
+      // classes de estilo/animação (começa invisível)
+      toast.className = `${bg} text-white text-xs px-4 py-3 rounded-lg shadow-lg flex items-center justify-between transition-all duration-300 opacity-0 transform translate-y-2 pointer-events-auto`;
+      // coloca a mensagem
+      toast.innerHTML = `<span>${mensagem}</span>`;
+      
+      // insere na tela
+      container.appendChild(toast);
+      // após 10ms...
+      setTimeout(() => {
+        // ...revela com fade
+        toast.classList.remove('opacity-0', 'translate-y-2');
+      }, 10);
+
+      // após 3 segundos...
+      setTimeout(() => {
+        // ...começa a sumir
+        toast.classList.add('opacity-0', 'translate-y-2');
+        // remove do DOM após 300ms
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // Controle da Tela de Login
+    // valida e faz o login
+    function realizarLogin(e) {
+      // impede recarregar a página
+      e.preventDefault();
+      // lê o usuário
+      const usr = document.getElementById('login-usuario').value.trim();
+      // lê a senha
+      const pwd = document.getElementById('login-senha').value.trim();
+      // pega o aviso de erro
+      const errorEl = document.getElementById('login-error');
+
+      // se faltar usuário ou senha...
+      if (!usr || !pwd) {
+        // ...mostra o erro
+        errorEl.classList.remove('hidden');
+        // ...e interrompe
+        return;
+      }
+
+      // esconde o erro
+      errorEl.classList.add('hidden');
+      // esconde a tela de login
+      document.getElementById('login-screen').classList.add('hidden');
+      // aviso de sucesso
+      showToast('Login realizado com sucesso!');
+    }
+
+    // Controle de Modo Escuro / Claro com Persistência
+    // alterna modo escuro/claro
+    function toggleDarkMode() {
+      // pega o <body>
+      const body = document.body;
+      // pega o botão-switch
+      const toggleBtn = document.getElementById('darkModeToggle');
+      // pega a bolinha do switch
+      const handle = document.getElementById('darkModeToggleHandle');
+      // pega o texto do modo
+      const label = document.getElementById('theme-label');
+
+      // se está claro, vira escuro:
+      if (body.classList.contains('light')) {
+        // tira a classe light
+        body.classList.remove('light');
+        // põe a classe dark
+        body.classList.add('dark');
+        // tira a cor cinza do switch
+        toggleBtn.classList.remove('bg-slate-300');
+        // põe a cor de destaque
+        toggleBtn.classList.add('bg-indigo-600');
+        // tira o deslocamento à esquerda
+        handle.classList.remove('translate-x-0');
+        // desliza a bolinha para a direita
+        handle.classList.add('translate-x-5');
+        // atualiza o texto
+        label.innerText = "Modo Escuro";
+        // guarda a preferência
+        localStorage.setItem('rpg_theme', 'dark');
+      } else {
+        // senão, vira claro:
+        body.classList.remove('dark');
+        // põe a classe light
+        body.classList.add('light');
+        // tira a cor de destaque do switch
+        toggleBtn.classList.remove('bg-indigo-600');
+        // põe a cor cinza
+        toggleBtn.classList.add('bg-slate-300');
+        // tira o deslocamento à direita
+        handle.classList.remove('translate-x-5');
+        // bolinha para a esquerda
+        handle.classList.add('translate-x-0');
+        // atualiza o texto
+        label.innerText = "Modo Claro";
+        // guarda a preferência
+        localStorage.setItem('rpg_theme', 'light');
+      }
+    }
+
+    // aplica o tema salvo ao abrir a página
+    function initTheme() {
+      // lê a preferência
+      const savedTheme = localStorage.getItem('rpg_theme');
+      // se era claro...
+      if (savedTheme === 'light') {
+        // ...alterna para claro
+        toggleDarkMode();
+      }
+    }
+
+    // troca de aba
+    function switchTab(tabId) {
+      // para cada aba (inclusive Mestre)...
+      ['personagens', 'faccoes', 'eventos', 'mestre'].forEach(t => {
+        // ...esconde a seção
+        document.getElementById(`view-${t}`).classList.add('hidden');
+        // ...pega o botão da aba
+        const btn = document.getElementById(`tab-btn-${t}`);
+        // ...tira o estilo de ativo
+        btn.classList.remove('bg-indigo-600', 'text-white');
+        // ...põe o estilo de inativo
+        btn.classList.add('text-slate-400', 'hover:text-slate-200', 'hover:bg-slate-800');
+      });
+
+      // mostra a seção escolhida
+      document.getElementById(`view-${tabId}`).classList.remove('hidden');
+      // pega o botão da aba escolhida
+      const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+      // tira o estilo de inativo
+      activeBtn.classList.remove('text-slate-400', 'hover:text-slate-200', 'hover:bg-slate-800');
+      // põe o estilo de ativo
+      activeBtn.classList.add('bg-indigo-600', 'text-white');
+
+    }
+
+    // desenha os cartões de personagens
+    function renderPersonagens() {
+      // pega a grade
+      const container = document.getElementById('grid-personagens');
+      // limpa a grade
+      container.innerHTML = '';
+      // só personagens da campanha ativa
+      const lista = state.personagens.filter(p => (p.campanhaId || '') === campanhaAtivaId);
+      // se não há nenhum...
+      if (lista.length === 0) {
+        // ...mostra mensagem de vazio
+        container.innerHTML = '<p class="text-slate-500 text-sm italic col-span-3">Nenhum personagem cadastrado nesta campanha.</p>';
+        // ...e para
+        return;
+      }
+      // para cada personagem...
+      lista.forEach(p => {
+        // nível = NEX ÷ 5 + 1
+        const nivel = Math.floor(p.nex / 5) + 1;
+        // cria o cartão
+        const card = document.createElement('div');
+        // classes de estilo do cartão
+        card.className = 'bg-slate-900 text-slate-100 border border-slate-800 rounded-xl p-5 space-y-4 shadow-lg relative group';
+        // HTML do cartão: nome, classe, nível, barra de NEX, vida e botões (linhas internas do texto não recebem comentário)
+        card.innerHTML = `
+          <div class="flex justify-between items-start">
+            <div>
+              <h3 class="font-bold text-base">${p.nome}</h3>
+              <p class="text-xs text-indigo-400 font-medium">${p.classe}</p>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="px-2.5 py-1 bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 rounded-full text-xs font-semibold">Nível ${nivel}</span>
+              <button onclick="deletarPersonagem('${p.id}')" class="text-slate-500 hover:text-red-400 p-1 transition"><i data-lucide="trash" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs text-slate-400">
+              <span>NEX Paranormal</span>
+              <span class="font-mono font-bold text-slate-200">${p.nex}%</span>
+            </div>
+            <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+              <div class="bg-gradient-to-r from-indigo-500 to-purple-500 h-full" style="width: ${Math.min(p.nex, 100)}%"></div>
+            </div>
+          </div>
+          <div class="flex justify-between items-center pt-2 border-t border-slate-800 text-xs">
+            <span class="text-slate-400">Vida: <strong class="text-red-400">${p.pv} HP</strong></span>
+            <button onclick="openModalAddNex('${p.id}')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs border border-slate-700 flex items-center space-x-1">
+              <i data-lucide="zap" class="w-3 h-3 text-yellow-400"></i><span>+ NEX</span>
+            </button>
+          </div>
+        `;
+        // coloca o cartão na grade
+        container.appendChild(card);
+      });
+      // recria os ícones Lucide
+      lucide.createIcons();
+    }
+
+    // exclui um personagem
+    function deletarPersonagem(id) {
+      // remove da lista pelo id
+      state.personagens = state.personagens.filter(p => p.id !== id);
+      // salva
+      saveState();
+      // redesenha
+      renderPersonagens();
+      // aviso
+      showToast('Personagem removido.');
+    }
+
+    // cria personagem ao enviar o formulário
+    function salvarPersonagem(e) {
+      // impede recarregar a página
+      e.preventDefault();
+      // monta o objeto do personagem
+      const novo = {
+        // id único
+        id: Date.now().toString(),
+        // nome digitado
+        nome: document.getElementById('p-nome').value,
+        // classe digitada
+        classe: document.getElementById('p-classe').value,
+        // NEX numérico (0 se vazio)
+        nex: parseInt(document.getElementById('p-nex').value) || 0,
+        // PV numérico (10 se vazio)
+        pv: parseInt(document.getElementById('p-pv').value) || 10,
+        // campanha atual
+        campanhaId: campanhaAtivaId
+      };
+      // adiciona à lista
+      state.personagens.push(novo);
+      // salva
+      saveState();
+      // redesenha
+      renderPersonagens();
+      // fecha o modal
+      closeModal('modal-personagem');
+      // limpa o formulário
+      document.getElementById('form-personagem').reset();
+      // aviso
+      showToast(`Agente ${novo.nome} criado!`);
+    }
+
+    // abre o modal de evoluir NEX
+    function openModalAddNex(id) {
+      // acha o personagem
+      const p = state.personagens.find(x => x.id === id);
+      // se não achou, sai
+      if (!p) return;
+      // guarda o id no campo escondido
+      document.getElementById('nex-personagem-id').value = p.id;
+      // mostra o nome no modal
+      document.getElementById('nex-personagem-nome').innerText = `Agente: ${p.nome}`;
+      // abre o modal
+      document.getElementById('modal-add-nex').classList.remove('hidden');
+    }
+
+    // aplica o NEX ao enviar
+    function confirmarAddNex(e) {
+      // impede recarregar a página
+      e.preventDefault();
+      // lê o id do personagem
+      const id = document.getElementById('nex-personagem-id').value;
+      // lê o valor digitado
+      const val = parseInt(document.getElementById('nex-valor').value) || 0;
+      // acha o personagem
+      const p = state.personagens.find(x => x.id === id);
+      // se existe...
+      if (p) {
+        // ...soma NEX, com teto de 100
+        p.nex = Math.min(100, p.nex + val);
+        // salva
+        saveState();
+        // redesenha
+        renderPersonagens();
+        // fecha o modal
+        closeModal('modal-add-nex');
+        // aviso
+        showToast(`+${val}% de NEX adicionado a ${p.nome}`);
+      }
+    }
+
+    // desenha os cartões de facções
+    function renderFaccoes() {
+      // pega a grade
+      const container = document.getElementById('grid-faccoes');
+      // limpa a grade
+      container.innerHTML = '';
+      // se não há facções...
+      if (state.faccoes.length === 0) {
+        // ...mostra mensagem de vazio
+        container.innerHTML = '<p class="text-slate-500 text-sm italic col-span-3">Nenhuma facção cadastrada.</p>';
+        // ...e para
+        return;
+      }
+
+      // para cada facção...
+      state.faccoes.forEach(f => {
+        // cria o cartão
+        const card = document.createElement('div');
+        // classes de estilo do cartão
+        card.className = 'bg-slate-900 text-slate-100 border border-slate-800 rounded-xl p-5 space-y-3 shadow-lg';
+        // HTML do cartão: nome, lixeira, descrição e reputação (linhas internas sem comentário)
+        card.innerHTML = `
+          <div class="flex justify-between items-start">
+            <h3 class="font-bold text-base">${f.nome}</h3>
+            <button onclick="deletarFaccao('${f.id}')" class="text-slate-500 hover:text-red-400 p-1 transition"><i data-lucide="trash" class="w-4 h-4"></i></button>
+          </div>
+          <p class="text-xs text-slate-400">${f.descricao}</p>
+          <div class="pt-3 border-t border-slate-800 text-xs">Reputação: <strong class="text-indigo-400">${f.reputacao} pts</strong></div>
+        `;
+        // coloca o cartão na grade
+        container.appendChild(card);
+      });
+      // recria os ícones
+      lucide.createIcons();
+    }
+
+    // exclui uma facção
+    function deletarFaccao(id) {
+      // remove da lista pelo id
+      state.faccoes = state.faccoes.filter(f => f.id !== id);
+      // salva
+      saveState();
+      // redesenha
+      renderFaccoes();
+      // aviso
+      showToast('Facção removida.');
+    }
+
+    // cria facção ao enviar o formulário
+    function salvarFaccao(e) {
+      // impede recarregar a página
+      e.preventDefault();
+      // monta o objeto da facção
+      const nova = {
+        // id único
+        id: Date.now().toString(),
+        // nome digitado
+        nome: document.getElementById('f-nome').value,
+        // descrição digitada
+        descricao: document.getElementById('f-descricao').value,
+        // reputação numérica (0 se vazio)
+        reputacao: parseInt(document.getElementById('f-reputacao').value) || 0
+      };
+      // adiciona à lista
+      state.faccoes.push(nova);
+      // salva
+      saveState();
+      // redesenha
+      renderFaccoes();
+      // fecha o modal
+      closeModal('modal-faccao');
+      // limpa o formulário
+      document.getElementById('form-faccao').reset();
+      // aviso
+      showToast(`Facção ${nova.nome} adicionada!`);
+    }
+
+    // desenha a lista de eventos
+    function renderEventos() {
+      // pega a lista
+      const container = document.getElementById('lista-eventos');
+      // limpa; se não há eventos, mostra mensagem de vazio
+      container.innerHTML = state.eventos.length === 0 ? '<p class="text-sm text-slate-500 italic py-4">Nenhum evento registrado.</p>' : '';
+      // para cada evento...
+      state.eventos.forEach(ev => {
+        // cria o item
+        const item = document.createElement('div');
+        // classes de estilo do item
+        item.className = 'bg-slate-900 text-slate-100 border border-slate-800 rounded-lg p-4 flex justify-between items-center shadow';
+        // título e descrição do evento
+        item.innerHTML = `<div><h4 class="font-bold text-sm">${ev.titulo}</h4><p class="text-xs text-slate-400">${ev.descricao}</p></div>`;
+        // coloca o item na lista
+        container.appendChild(item);
+      });
+    }
+
+    // cria evento ao enviar o formulário
+    function salvarEvento(e) {
+      // impede recarregar a página
+      e.preventDefault();
+      // monta o objeto do evento
+      const novo = {
+        // id único
+        id: Date.now().toString(),
+        // título digitado
+        titulo: document.getElementById('e-titulo').value,
+        // descrição digitada
+        descricao: document.getElementById('e-descricao').value
+      };
+      // adiciona à lista
+      state.eventos.push(novo);
+      // salva
+      saveState();
+      // redesenha
+      renderEventos();
+      // fecha o modal
+      closeModal('modal-evento');
+      // limpa o formulário
+      document.getElementById('form-evento').reset();
+      // aviso
+      showToast('Evento registrado!');
+    }
+
+    // abre o modal de personagem
+    function openModalPersonagem() { document.getElementById('modal-personagem').classList.remove('hidden'); }
+    // abre o modal de facção
+    function openModalFaccao() { document.getElementById('modal-faccao').classList.remove('hidden'); }
+    // abre o modal de evento
+    function openModalEvento() { document.getElementById('modal-evento').classList.remove('hidden'); }
+    // fecha qualquer modal pelo id (esconde)
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    // ===== MESTRE: documentos PDF/Excel salvos no IndexedDB (aguenta arquivos grandes) =====
+    // nome do banco IndexedDB e do "armazém" de documentos
+    const DB_NAME = 'rpg_mestre_db', STORE = 'documentos';
+    // extensões aceitas e seus tipos MIME
+    const MIMES = { pdf: 'application/pdf', xls: 'application/vnd.ms-excel', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' };
+    // escapa caracteres HTML (evita injetar código pelo nome do arquivo)
+    const esc = t => String(t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+    // abre (ou cria) o banco de dados
+    function dbOpen() {
+      // devolve uma promessa
+      return new Promise((res, rej) => {
+        // pede para abrir o banco, versão 1
+        const r = indexedDB.open(DB_NAME, 1);
+        // na primeira vez, cria o armazém com chave "id"
+        r.onupgradeneeded = () => r.result.createObjectStore(STORE, { keyPath: 'id' });
+        // sucesso: devolve o banco
+        r.onsuccess = () => res(r.result);
+        // erro: rejeita a promessa
+        r.onerror = () => rej(r.error);
+      });
+    }
+    // auxiliar: executa uma operação numa transação
+    async function dbRun(mode, fn) {
+      // abre o banco
+      const db = await dbOpen();
+      // devolve uma promessa
+      return new Promise((res, rej) => {
+        // cria a transação (leitura ou escrita)
+        const tx = db.transaction(STORE, mode);
+        // executa a operação no armazém
+        const req = fn(tx.objectStore(STORE));
+        // ao concluir, devolve o resultado
+        tx.oncomplete = () => res(req ? req.result : undefined);
+        // em erro, rejeita
+        tx.onerror = () => rej(tx.error);
+      });
+    }
+    // atalho: lê todos os documentos
+    const docsAll = () => dbRun('readonly', st => st.getAll());
+
+    // formata bytes em KB ou MB
+    function fmtTamanho(b) {
+      // menos de 1 MB mostra KB; senão MB
+      return b < 1024 * 1024 ? (b / 1024).toFixed(0) + ' KB' : (b / 1024 / 1024).toFixed(1) + ' MB';
+    }
+
+    // recebe arquivos e salva cada um
+    async function uploadDocs(files) {
+      // contador de arquivos salvos
+      let ok = 0;
+      // para cada arquivo escolhido...
+      for (const f of Array.from(files)) {
+        // ...pega a extensão em minúsculas
+        const ext = f.name.split('.').pop().toLowerCase();
+        // ...recusa se não for PDF/XLS/XLSX e pula
+        if (!MIMES[ext]) { showToast(`"${f.name}" não é PDF/XLS/XLSX.`, 'error'); continue; }
+        // ...tenta salvar
+        try {
+          // grava o registro no banco
+          await dbRun('readwrite', st => st.put({
+            // id único com sufixo aleatório
+            id: Date.now().toString() + Math.random().toString(36).slice(2, 6),
+            // nome, extensão, tamanho e data
+            nome: f.name, ext, tamanho: f.size, data: new Date().toISOString(),
+            // campanha atual
+            campanhaId: campanhaAtivaId,
+            // o arquivo em si, com o tipo MIME correto
+            blob: f.slice(0, f.size, MIMES[ext])
+          }));
+          // conta como salvo
+          ok++;
+        // se falhar, avisa o erro
+        } catch (err) { showToast(`Erro ao salvar "${f.name}".`, 'error'); }
+      }
+      // avisa quantos foram salvos
+      if (ok) showToast(`${ok} documento(s) salvo(s)!`);
+      // pede ao navegador para não apagar os dados
+      if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
+      // atualiza a lista
+      renderMestre();
+    }
+
+    // desenha os cartões de documentos
+    async function renderMestre() {
+      // pega a grade
+      const box = document.getElementById('lista-docs');
+      // lista começa vazia
+      let docs = [];
+      // lê do banco e filtra pela campanha ativa
+      try { docs = (await docsAll()).filter(d => (d.campanhaId || '') === campanhaAtivaId); } catch (e) {}
+      // mais recentes primeiro
+      docs.sort((a, b) => b.data.localeCompare(a.data));
+      // se não há documentos...
+      if (!docs.length) {
+        // ...mostra mensagem de vazio
+        box.innerHTML = '<p class="text-slate-500 text-sm italic col-span-3">Nenhum documento nesta campanha.</p>';
+        // ...e para
+        return;
+      }
+      // monta o HTML de cada documento
+      box.innerHTML = docs.map(d => {
+        // é PDF?
+        const pdf = d.ext === 'pdf';
+        // HTML do cartão: ícone, nome (escapado), tipo/tamanho/data e botões Abrir (só PDF), Baixar e Excluir (linhas internas sem comentário)
+        return `<div class="bg-slate-900 text-slate-100 border border-slate-800 rounded-xl p-4 space-y-3 shadow-lg">
+          <div class="flex items-start gap-3">
+            <div class="p-2 rounded-lg ${pdf ? 'bg-red-500/10 text-red-400' : 'bg-emerald-500/10 text-emerald-400'}"><i data-lucide="${pdf ? 'file-text' : 'file-spreadsheet'}" class="w-5 h-5"></i></div>
+            <div class="min-w-0 flex-1">
+              <h3 class="font-bold text-sm truncate" title="${esc(d.nome)}">${esc(d.nome)}</h3>
+              <p class="text-xs text-slate-400">${d.ext.toUpperCase()} · ${fmtTamanho(d.tamanho)} · ${new Date(d.data).toLocaleDateString('pt-BR')}</p>
+            </div>
+          </div>
+          <div class="flex justify-end gap-2 pt-2 border-t border-slate-800 text-xs">
+            ${pdf ? `<button onclick="abrirDoc('${d.id}')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded border border-slate-700 flex items-center gap-1"><i data-lucide="eye" class="w-3 h-3"></i>Abrir</button>` : ''}
+            <button onclick="baixarDoc('${d.id}')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded border border-slate-700 flex items-center gap-1"><i data-lucide="download" class="w-3 h-3"></i>Baixar</button>
+            <button onclick="excluirDoc('${d.id}')" class="text-slate-500 hover:text-red-400 p-1 transition" title="Excluir"><i data-lucide="trash" class="w-4 h-4"></i></button>
+          </div>
+        </div>`;
+      // junta todos os cartões numa string
+      }).join('');
+      // recria os ícones
+      lucide.createIcons();
+    }
+
+    // busca um documento pelo id
+    async function pegarDoc(id) { return dbRun('readonly', st => st.get(id)); }
+    // abre um PDF em nova aba
+    async function abrirDoc(id) {
+      // busca o documento; se não achar, sai
+      const d = await pegarDoc(id); if (!d) return;
+      // cria URL temporária do arquivo e abre
+      window.open(URL.createObjectURL(d.blob), '_blank');
+    }
+    // baixa um documento
+    async function baixarDoc(id) {
+      // busca o documento; se não achar, sai
+      const d = await pegarDoc(id); if (!d) return;
+      // cria um link invisível
+      const a = document.createElement('a');
+      // aponta para o arquivo e define o nome
+      a.href = URL.createObjectURL(d.blob); a.download = d.nome;
+      // anexa, clica e remove o link
+      document.body.appendChild(a); a.click(); a.remove();
+      // libera a URL temporária após 10s
+      setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+    }
+    // exclui um documento
+    async function excluirDoc(id) {
+      // apaga do banco
+      await dbRun('readwrite', st => st.delete(id));
+      // redesenha a lista
+      renderMestre();
+      // aviso
+      showToast('Documento removido.');
+    }
+    // apaga todos os documentos de uma campanha
+    async function excluirDocsDaCampanha(cid) {
+      // busca os documentos da campanha
+      const docs = (await docsAll()).filter(d => (d.campanhaId || '') === cid);
+      // apaga um por um
+      for (const d of docs) await dbRun('readwrite', st => st.delete(d.id));
+    }
+
+    // arrastar e soltar
+    // função que roda na hora (liga o arrastar e soltar)
+    (() => {
+      // pega a área de upload
+      const dz = document.getElementById('dropzone');
+      // ao arrastar sobre ela: permite soltar e destaca a borda
+      ['dragenter', 'dragover'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('border-indigo-500'); }));
+      // ao sair ou soltar: tira o destaque
+      ['dragleave', 'drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('border-indigo-500'); }));
+      // ao soltar: envia os arquivos
+      dz.addEventListener('drop', e => uploadDocs(e.dataTransfer.files));
+    })();
+
+    // quando a página termina de carregar...
+    document.addEventListener('DOMContentLoaded', () => {
+      // ...aplica o tema salvo
+      initTheme();
+      // ...desenha campanhas e aplica o tema
+      renderCampanhas();
+      // ...desenha personagens
+      renderPersonagens();
+      // ...desenha facções
+      renderFaccoes();
+      // ...desenha eventos
+      renderEventos();
+      // ...desenha documentos
+      renderMestre();
+      // ...cria os ícones
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
