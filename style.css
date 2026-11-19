@@ -1,0 +1,62 @@
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--scroll-track); }
+::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hover); }
+
+:root {
+  --scroll-track: #0f172a;
+  --scroll-thumb: #334155;
+  --scroll-thumb-hover: #475569;
+}
+.light {
+  --scroll-track: #f1f5f9;
+  --scroll-thumb: #cbd5e1;
+  --scroll-thumb-hover: #94a3b8;
+}
+
+/* ===== TEMA POR SISTEMA DE RPG ===== */
+:root { --accent: #4f46e5; }
+[data-sistema="dnd"]               { --accent: #c4291c; }  /* D&D 5e */
+[data-sistema="ordem_paranormal"]  { --accent: #7c3aed; }  /* Ordem Paranormal */
+[data-sistema="tormenta20"]        { --accent: #b91c1c; }  /* Tormenta20 */
+
+:root, [data-sistema] {
+  --accent-hover: color-mix(in srgb, var(--accent) 82%, white);
+  --accent-text:  color-mix(in srgb, var(--accent) 55%, white);
+  --accent-light: color-mix(in srgb, var(--accent) 60%, white);
+}
+body .bg-indigo-600 { background-color: var(--accent); }
+body .hover\:bg-indigo-500:hover { background-color: var(--accent-hover); }
+body .bg-indigo-600\/20 { background-color: color-mix(in srgb, var(--accent) 20%, transparent); }
+body .bg-indigo-500\/10 { background-color: color-mix(in srgb, var(--accent) 12%, transparent); }
+body .text-indigo-400, body .text-indigo-300 { color: var(--accent-text); }
+body .border-indigo-500\/30 { border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+body .border-indigo-500, body .focus\:border-indigo-500:focus { border-color: var(--accent); }
+body .shadow-indigo-600\/20 { --tw-shadow-color: color-mix(in srgb, var(--accent) 25%, transparent); --tw-shadow: var(--tw-shadow-colored); }
+body ::selection { background-color: var(--accent); color: #fff; }
+.btn-campanha { border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent); color: var(--accent-text); }
+.btn-campanha:hover { background: color-mix(in srgb, var(--accent) 15%, transparent); }
+.sistema-card { border: 1px solid #334155; border-radius: .75rem; padding: .6rem; text-align: center; transition: .2s; }
+input:checked + .sistema-card { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 15%, transparent); }
+
+/* ===== INTERFACE INTEIRA COM O TOM DO SISTEMA ===== */
+html[data-sistema] {
+  --bg:        color-mix(in srgb, var(--accent)  7%, #020617);
+  --surface:   color-mix(in srgb, var(--accent) 13%, #0f172a);
+  --surface-2: color-mix(in srgb, var(--accent) 18%, #1e293b);
+  --line:      color-mix(in srgb, var(--accent) 30%, #1e293b);
+  --line-2:    color-mix(in srgb, var(--accent) 35%, #334155);
+  --scroll-track: var(--bg); --scroll-thumb: var(--line-2); --scroll-thumb-hover: var(--accent);
+}
+html[data-sistema] .bg-slate-950 { background-color: var(--bg); }
+html[data-sistema] .bg-slate-900 { background-color: var(--surface); }
+html[data-sistema] .bg-slate-900\/80 { background-color: color-mix(in srgb, var(--surface) 80%, transparent); }
+html[data-sistema] .bg-slate-900\/50 { background-color: color-mix(in srgb, var(--surface) 50%, transparent); }
+html[data-sistema] .bg-slate-800 { background-color: var(--surface-2); }
+html[data-sistema] .bg-slate-800\/60 { background-color: color-mix(in srgb, var(--surface-2) 60%, transparent); }
+html[data-sistema] .bg-slate-800\/40 { background-color: color-mix(in srgb, var(--surface-2) 40%, transparent); }
+html[data-sistema] .hover\:bg-slate-700:hover { background-color: var(--line-2); }
+html[data-sistema] .hover\:bg-slate-800:hover { background-color: var(--surface-2); }
+html[data-sistema] .border-slate-800 { border-color: var(--line); }
+html[data-sistema] .border-slate-700 { border-color: var(--line-2); }
+body, header, footer, section div { transition: background-color .25s, border-color .25s, transform .15s; }

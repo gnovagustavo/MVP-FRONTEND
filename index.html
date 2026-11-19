@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RPG Campaign Manager - Multi-Sistema</title>
+
+  <!-- Tailwind CSS & Lucide Icons -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+    }
+  </script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-950 text-slate-100 dark:bg-slate-950 dark:text-slate-100 light:bg-slate-50 light:text-slate-950 min-h-screen flex flex-col font-sans antialiased selection:bg-indigo-500 selection:text-white transition-colors duration-300">
+
+  <!-- NOTIFICAÇÕES TOAST CONTAINER -->
+  <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2 max-w-xs w-full pointer-events-none"></div>
+
+  <!-- =================================================================== -->
+  <!-- BLOCO: TELA DE LOGIN                                                -->
+  <!-- =================================================================== -->
+  <div id="login-screen" class="fixed inset-0 bg-slate-950 dark:bg-slate-950 light:bg-slate-100 z-50 flex items-center justify-center p-4 transition-colors duration-300">
+    <div class="bg-slate-900 dark:bg-slate-900 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 w-full max-w-md rounded-2xl p-8 shadow-2xl space-y-6">
+      <div class="text-center space-y-2">
+        <div class="inline-flex p-3 bg-indigo-600/20 text-indigo-400 rounded-xl border border-indigo-500/30">
+          <i data-lucide="shield" class="w-8 h-8"></i>
+        </div>
+        <h1 class="font-bold text-2xl text-slate-100 dark:text-slate-100 light:text-slate-900">RPG Campaign Manager</h1>
+        <p class="text-xs text-slate-400 dark:text-slate-400 light:text-slate-500">Gestão Multi-Sistema (D&amp;D, Ordem Paranormal e Tormenta20)</p>
+      </div>
+
+      <form onsubmit="realizarLogin(event)" class="space-y-4">
+        <div id="login-error" class="hidden text-xs text-red-400 bg-red-950/40 border border-red-800 p-2.5 rounded-lg text-center">
+          Por favor, preencha o e-mail e a senha para acessar.
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 dark:text-slate-400 light:text-slate-600 mb-1">E-mail ou Usuário</label>
+          <input type="text" id="login-usuario" placeholder="mestre@rpg.com" class="w-full bg-slate-800 dark:bg-slate-800 light:bg-slate-50 border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-lg px-4 py-2.5 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 dark:text-slate-400 light:text-slate-600 mb-1">Senha</label>
+          <input type="password" id="login-senha" placeholder="••••••••" class="w-full bg-slate-800 dark:bg-slate-800 light:bg-slate-50 border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-lg px-4 py-2.5 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 focus:outline-none focus:border-indigo-500">
+        </div>
+        <button type="submit" id="btn-login-submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium text-sm shadow-lg shadow-indigo-600/20 transition flex justify-center items-center space-x-2">
+          <span>Entrar no Sistema</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- =================================================================== -->
+  <!-- BLOCO: BARRA DE NAVEGAÇÃO PRINCIPAL (HEADER)                        -->
+  <!-- =================================================================== -->
+  <header class="bg-slate-900/80 dark:bg-slate-900/80 light:bg-white/80 backdrop-blur-md border-b border-slate-800 dark:border-slate-800 light:border-slate-200 sticky top-0 z-40 transition-colors duration-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
+      <div class="flex items-center space-x-3 shrink-0">
+        <div class="p-2 bg-indigo-600/20 text-indigo-400 rounded-lg border border-indigo-500/30">
+          <i data-lucide="shield"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-base sm:text-lg text-slate-100 dark:text-slate-100 light:text-slate-900 leading-tight">RPG Campaign Manager</h1>
+          <p id="header-sub" class="text-xs text-slate-400 dark:text-slate-400 light:text-slate-500">Ordem Paranormal</p>
+        </div>
+      </div>
+
+      <nav class="flex space-x-1 sm:space-x-1.5 overflow-x-auto">
+        <button onclick="openModalCampanha()" id="btn-nova-campanha" class="btn-campanha px-2.5 py-2 text-xs sm:text-sm font-medium rounded-md flex items-center space-x-1.5 transition shrink-0">
+          <i data-lucide="flag" class="w-4 h-4"></i>
+          <span class="hidden md:inline">Nova Campanha</span>
+        </button>
+        <button onclick="switchTab('personagens')" id="tab-btn-personagens" class="px-2.5 py-2 text-xs sm:text-sm font-medium rounded-md flex items-center space-x-1.5 transition bg-indigo-600 text-white shrink-0">
+          <i data-lucide="users" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Personagens</span>
+          <span id="badge-count-personagens" class="text-[10px] px-1.5 py-0.2 rounded-full bg-black/25 font-bold">0</span>
+        </button>
+        <button onclick="switchTab('criaturas')" id="tab-btn-criaturas" class="px-2.5 py-2 text-xs sm:text-sm font-medium rounded-md flex items-center space-x-1.5 transition text-slate-400 hover:text-slate-200 hover:bg-slate-800 shrink-0">
+          <i data-lucide="skull" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Criaturas</span>
+          <span id="badge-count-criaturas" class="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-800 text-slate-300 font-bold">0</span>
+        </button>
+        <button onclick="switchTab('faccoes')" id="tab-btn-faccoes" class="px-2.5 py-2 text-xs sm:text-sm font-medium rounded-md flex items-center space-x-1.5 transition text-slate-400 hover:text-slate-200 hover:bg-slate-800 shrink-0">
+          <i data-lucide="swords" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Facções</span>
+          <span id="badge-count-faccoes" class="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-800 text-slate-300 font-bold">0</span>
+        </button>
+        <button onclick="switchTab('eventos')" id="tab-btn-eventos" class="px-2.5 py-2 text-xs sm:text-sm font-medium rounded-md flex items-center space-x-1.5 transition text-slate-400 hover:text-slate-200 hover:bg-slate-800 shrink-0">
+          <i data-lucide="scroll" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Eventos</span>
+          <span id="badge-count-eventos" class="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-800 text-slate-300 font-bold">0</span>
+        </button>
+        <button onclick="switchTab('mestre')" id="tab-btn-mestre" class="px-2.5 py-2 text-xs sm:text-sm font-medium rounded-md flex items-center space-x-1.5 transition text-slate-400 hover:text-slate-200 hover:bg-slate-800 shrink-0">
+          <i data-lucide="crown" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Mestre</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- =================================================================== -->
+  <!-- BLOCO: CONTEÚDO PRINCIPAL                                           -->
+  <!-- =================================================================== -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- Barra de Sistema & Campanha Ativa -->
+    <div class="mb-6 bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-lg">
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="flex items-center gap-2">
+          <i data-lucide="layers" class="w-4 h-4 text-indigo-400"></i>
+          <label for="sistema-select" class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Sistema:</label>
+          <select id="sistema-select" onchange="trocarSistema(this.value)" class="bg-slate-800 border border-slate-700 text-slate-100 rounded-lg px-3 py-1.5 text-sm font-semibold focus:outline-none focus:border-indigo-500">
+            <option value="dnd">D&amp;D 5e</option>
+            <option value="ordem_paranormal">Ordem Paranormal</option>
+            <option value="tormenta20">Tormenta20</option>
+          </select>
+        </div>
+
+        <span class="text-slate-700 hidden sm:inline">|</span>
+
+        <div class="flex items-center gap-2 flex-wrap">
+          <i data-lucide="book-open" class="w-4 h-4 text-indigo-400"></i>
+          <label for="campanha-select" class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Campanha:</label>
+          <select id="campanha-select" onchange="selecionarCampanha(this.value)" class="bg-slate-800 border border-slate-700 text-slate-100 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-indigo-500 max-w-xs sm:max-w-sm"></select>
+          <button id="btn-edit-campanha" onclick="openModalCampanha(true)" title="Editar campanha ativa" class="hidden text-slate-400 hover:text-indigo-400 p-1.5 rounded bg-slate-800/60 hover:bg-slate-800 transition"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+          <button id="btn-del-campanha" onclick="deletarCampanha()" title="Excluir campanha ativa" class="hidden text-slate-500 hover:text-red-400 p-1.5 rounded bg-slate-800/60 hover:bg-slate-800 transition"><i data-lucide="trash" class="w-4 h-4"></i></button>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span id="campanha-count-pill" class="px-2.5 py-1 bg-slate-800 border border-slate-700 text-slate-300 rounded-full text-[11px] font-medium"></span>
+        <span id="campanha-badge" class="px-3 py-1 bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 rounded-full text-xs font-semibold"></span>
+      </div>
+      <p id="campanha-desc" class="w-full text-xs text-slate-400 hidden border-t border-slate-800/80 pt-2"></p>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- ABA: PERSONAGENS                                                  -->
+    <!-- ================================================================= -->
+    <section id="view-personagens" class="space-y-6">
+      <div class="flex flex-wrap justify-between items-center gap-4">
+        <div>
+          <h2 id="titulo-personagens" class="text-xl font-bold text-slate-100 dark:text-slate-100 light:text-slate-900">Personagens</h2>
+          <p id="subtitulo-personagens" class="text-sm text-slate-400 dark:text-slate-400 light:text-slate-600">Fichas técnicas isoladas por sistema e campanha.</p>
+        </div>
+        <button onclick="openModalPersonagem()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium text-sm flex items-center space-x-2 shadow-lg shadow-indigo-600/20 transition">
+          <i data-lucide="user-plus" class="w-4 h-4"></i>
+          <span>Novo Personagem</span>
+        </button>
+      </div>
+      <div id="grid-personagens" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- ABA: CRIATURAS & BESTIÁRIO                                        -->
+    <!-- ================================================================= -->
+    <section id="view-criaturas" class="space-y-6 hidden">
+      <div class="flex flex-wrap justify-between items-center gap-4">
+        <div>
+          <h2 id="titulo-criaturas" class="text-xl font-bold text-slate-100 dark:text-slate-100 light:text-slate-900">Bestiário &amp; Criaturas</h2>
+          <p id="subtitulo-criaturas" class="text-sm text-slate-400 dark:text-slate-400 light:text-slate-600">Gerencie criaturas personalizadas e consulte bases externas compatíveis com o sistema ativo.</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button id="btn-consultar-api" onclick="consultarCriaturasExternas()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-lg font-medium text-sm flex items-center space-x-2 transition">
+            <i data-lucide="globe" class="w-4 h-4 text-indigo-400"></i>
+            <span id="btn-consultar-api-label">Consultar SRD (Open5e)</span>
+          </button>
+          <button onclick="openModalCriatura()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium text-sm flex items-center space-x-2 shadow-lg shadow-indigo-600/20 transition">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            <span>Nova Criatura</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Status da Consulta Externa / Aviso de Fonte -->
+      <div id="api-status-banner" class="hidden rounded-xl p-3.5 text-xs flex items-center justify-between gap-3 border"></div>
+
+      <!-- Barra de Pesquisa e Filtros -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="relative sm:col-span-2">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+          <input type="text" id="filtro-criatura-busca" oninput="renderCriaturas()" placeholder="Pesquisar criatura por nome, tipo ou habilidades..." class="w-full bg-slate-800 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <select id="filtro-criatura-tipo" onchange="renderCriaturas()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+            <option value="">Todos os Tipos / Elementos</option>
+          </select>
+        </div>
+        <div class="flex gap-2">
+          <select id="filtro-criatura-origem" onchange="renderCriaturas()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+            <option value="">Todas as Origens</option>
+            <option value="personalizada">Personalizadas (Local)</option>
+            <option value="externa">API Externa (SRD)</option>
+          </select>
+          <button onclick="limparFiltrosCriaturas()" title="Limpar filtros" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 rounded-lg text-xs transition shrink-0">
+            Limpar
+          </button>
+        </div>
+      </div>
+
+      <!-- Grid de Criaturas -->
+      <div id="grid-criaturas" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- ABA: FACÇÕES                                                      -->
+    <!-- ================================================================= -->
+    <section id="view-faccoes" class="space-y-6 hidden">
+      <div class="flex justify-between items-center">
+        <div>
+          <h2 class="text-xl font-bold text-slate-100 dark:text-slate-100 light:text-slate-900">Facções e Organizações</h2>
+          <p class="text-sm text-slate-400 dark:text-slate-400 light:text-slate-600">Controle o nível de reputação, diplomacia e prestígio neste contexto.</p>
+        </div>
+        <button onclick="openModalFaccao()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium text-sm flex items-center space-x-2 shadow-lg shadow-indigo-600/20 transition">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          <span>Nova Facção</span>
+        </button>
+      </div>
+      <div id="grid-faccoes" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- ABA: EVENTOS & ROLADOR DE DADOS                                   -->
+    <!-- ================================================================= -->
+    <section id="view-eventos" class="space-y-6 hidden">
+      <div class="flex justify-between items-center">
+        <div>
+          <h2 class="text-xl font-bold text-slate-100 dark:text-slate-100 light:text-slate-900">Mesa de Dados &amp; Eventos</h2>
+          <p class="text-sm text-slate-400 dark:text-slate-400 light:text-slate-600">Role dados online e registre os acontecimentos da campanha atual.</p>
+        </div>
+        <button onclick="openModalEvento()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium text-sm flex items-center space-x-2 shadow-lg shadow-indigo-600/20 transition">
+          <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+          <span>Anotar Manualmente</span>
+        </button>
+      </div>
+
+      <!-- Rolador de Dados -->
+      <div class="bg-slate-900 dark:bg-slate-900 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 rounded-xl p-5 shadow-lg">
+        <h3 class="font-bold text-slate-100 dark:text-slate-100 light:text-slate-900 flex items-center gap-2 mb-4"><i data-lucide="dices" class="w-5 h-5 text-indigo-400"></i> Rolador de Dados Online</h3>
+        <div class="flex flex-wrap gap-4 items-end">
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Quantidade</label>
+            <input type="number" id="dice-qtd" value="1" min="1" class="w-24 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Tipo de Dado</label>
+            <select id="dice-tipo" class="w-32 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+              <option value="4">d4</option>
+              <option value="6">d6</option>
+              <option value="8">d8</option>
+              <option value="10">d10</option>
+              <option value="12">d12</option>
+              <option value="20" selected>d20</option>
+              <option value="100">d100</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Modificador (+/-)</label>
+            <input type="number" id="dice-mod" value="0" class="w-28 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+          </div>
+          <button onclick="rolarDados()" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold text-sm transition shadow-lg shadow-indigo-600/20 flex items-center gap-2">
+            ROLAR
+          </button>
+        </div>
+
+        <div id="dice-result-area" class="hidden mt-4 p-4 bg-slate-800/50 border border-slate-700 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <p class="text-xs text-slate-400" id="dice-formula"></p>
+            <p class="text-2xl font-black text-indigo-400 mt-1" id="dice-total"></p>
+          </div>
+          <button onclick="anotarRolagemEvento()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-2">
+            <i data-lucide="edit-3" class="w-4 h-4"></i> Anotar no Histórico
+          </button>
+        </div>
+      </div>
+
+      <!-- Lista do Histórico de Eventos -->
+      <div id="lista-eventos" class="space-y-3"></div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- ABA: MESTRE (DOCUMENTOS PDF / EXCEL & BACKUP)                     -->
+    <!-- ================================================================= -->
+    <section id="view-mestre" class="space-y-6 hidden">
+      <div class="flex flex-wrap justify-between items-center gap-4">
+        <div>
+          <h2 class="text-xl font-bold text-slate-100 dark:text-slate-100 light:text-slate-900">Documentos &amp; Ferramentas do Mestre</h2>
+          <p class="text-sm text-slate-400 dark:text-slate-400 light:text-slate-600">Suba PDFs/planilhas da campanha ou faça backup completo dos dados.</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button onclick="exportarBackupJSON()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-lg text-xs font-medium flex items-center gap-1.5 transition">
+            <i data-lucide="download" class="w-4 h-4 text-indigo-400"></i> Exportar Backup (.json)
+          </button>
+          <label class="cursor-pointer px-3.5 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-lg text-xs font-medium flex items-center gap-1.5 transition">
+            <i data-lucide="upload" class="w-4 h-4 text-indigo-400"></i> Importar Backup
+            <input type="file" accept=".json,application/json" class="hidden" onchange="importarBackupJSON(this.files[0]); this.value=''">
+          </label>
+        </div>
+      </div>
+
+      <label id="dropzone" for="input-docs" class="block cursor-pointer border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-xl p-8 text-center transition bg-slate-900/50">
+        <i data-lucide="upload-cloud" class="w-8 h-8 mx-auto text-indigo-400 mb-2"></i>
+        <p class="text-sm text-slate-200 font-medium">Arraste os arquivos aqui ou clique para escolher</p>
+        <p class="text-xs text-slate-500 mt-1">PDF, XLS ou XLSX (isolados na campanha e sistema selecionados)</p>
+        <input id="input-docs" type="file" multiple accept=".pdf,.xls,.xlsx,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="hidden" onchange="uploadDocs(this.files); this.value=''">
+      </label>
+      <div id="lista-docs" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </section>
+
+  </main>
+
+  <!-- =================================================================== -->
+  <!-- BLOCO: RODAPÉ COM SWITCH DE MODO ESCURO / CLARO                     -->
+  <!-- =================================================================== -->
+  <footer class="bg-slate-900/50 dark:bg-slate-900/50 light:bg-white/50 border-t border-slate-800 dark:border-slate-800 light:border-slate-200 py-4 mt-auto transition-colors duration-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400 dark:text-slate-400 light:text-slate-600">
+      <p>&copy; 2026 RPG Campaign Manager. D&amp;D 5e · Ordem Paranormal · Tormenta20.</p>
+      
+      <div class="flex items-center space-x-3">
+        <div class="flex items-center space-x-1.5">
+          <i data-lucide="sun" class="w-4 h-4 text-amber-400"></i>
+          <span id="theme-label">Modo Escuro</span>
+        </div>
+        <button type="button" onclick="toggleDarkMode()" id="darkModeToggle" class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-indigo-600 transition-colors duration-200 ease-in-out focus:outline-none" role="switch" aria-checked="true">
+          <span id="darkModeToggleHandle" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out translate-x-5"></span>
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- =================================================================== -->
+  <!-- BLOCO: ESTRUTURAS MODAIS                                            -->
+  <!-- =================================================================== -->
+  
+  <!-- Modal: Campanha (Criar e Editar sem sobrescrever outras) -->
+  <div id="modal-campanha" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-xl p-6 shadow-2xl space-y-4 text-slate-100">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 id="modal-campanha-titulo" class="font-bold text-lg">Nova Campanha</h3>
+        <button onclick="closeModal('modal-campanha')" class="text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
+      </div>
+      <form id="form-campanha" onsubmit="salvarCampanha(event)" class="space-y-4">
+        <input type="hidden" id="c-edit-id">
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Nome da Campanha</label>
+          <input type="text" id="c-nome" required placeholder="Ex: O Segredo na Ilha, Maldição de Strahd..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Descrição</label>
+          <textarea id="c-descricao" rows="3" placeholder="Sinopse ou anotações gerais da mesa..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"></textarea>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Sistema de RPG</label>
+          <div class="grid grid-cols-3 gap-2">
+            <label class="cursor-pointer"><input type="radio" name="c-sistema" value="dnd" class="sr-only">
+              <div class="sistema-card" data-sistema="dnd"><span class="block h-1.5 rounded-full mb-2" style="background:var(--accent)"></span><strong class="text-xs sm:text-sm">D&amp;D 5e</strong><p class="text-[10px] text-slate-400">Fantasia épica</p></div></label>
+            <label class="cursor-pointer"><input type="radio" name="c-sistema" value="ordem_paranormal" class="sr-only">
+              <div class="sistema-card" data-sistema="ordem_paranormal"><span class="block h-1.5 rounded-full mb-2" style="background:var(--accent)"></span><strong class="text-xs sm:text-sm">Ordem</strong><p class="text-[10px] text-slate-400">Terror paranormal</p></div></label>
+            <label class="cursor-pointer"><input type="radio" name="c-sistema" value="tormenta20" class="sr-only">
+              <div class="sistema-card" data-sistema="tormenta20"><span class="block h-1.5 rounded-full mb-2" style="background:var(--accent)"></span><strong class="text-xs sm:text-sm">Tormenta20</strong><p class="text-[10px] text-slate-400">Arton &amp; Tormenta</p></div></label>
+          </div>
+        </div>
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" onclick="closeModal('modal-campanha')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm">Cancelar</button>
+          <button type="submit" id="btn-submit-campanha" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium">Criar e Selecionar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Personagem (DINÂMICO POR SISTEMA) -->
+  <div id="modal-personagem" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <div>
+          <h3 id="modal-personagem-titulo" class="font-bold text-lg text-slate-100">Nova Ficha de Personagem</h3>
+          <p id="modal-personagem-sub" class="text-[11px] text-indigo-400 font-semibold"></p>
+        </div>
+        <button onclick="closeModal('modal-personagem')" class="text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
+      </div>
+      <form id="form-personagem" onsubmit="salvarPersonagem(event)" class="space-y-4">
+        <input type="hidden" id="p-edit-id">
+        <div id="personagem-campos-dinamicos" class="space-y-4"></div>
+        <div class="flex justify-end space-x-2 pt-2 border-t border-slate-800">
+          <button type="button" onclick="closeModal('modal-personagem')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm">Cancelar</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium">Salvar Ficha</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Evoluir Progressão (NEX / Nível) -->
+  <div id="modal-evoluir" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-xl p-6 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 id="evoluir-titulo" class="font-bold text-lg text-slate-100">Evoluir Personagem</h3>
+        <button onclick="closeModal('modal-evoluir')" class="text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
+      </div>
+      <form id="form-evoluir" onsubmit="confirmarEvolucao(event)" class="space-y-4">
+        <input type="hidden" id="evoluir-personagem-id">
+        <div>
+          <p id="evoluir-personagem-nome" class="text-sm font-semibold text-indigo-400 mb-2"></p>
+          <label id="evoluir-label" class="block text-xs font-medium text-slate-400 mb-1">Incremento</label>
+          <input type="number" id="evoluir-valor" min="1" max="100" value="1" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" onclick="closeModal('modal-evoluir')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm">Cancelar</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium">Aplicar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Criatura (CADASTRO & EDIÇÃO DINÂMICA POR SISTEMA) -->
+  <div id="modal-criatura" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto text-slate-100">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <div>
+          <h3 id="modal-criatura-titulo" class="font-bold text-lg">Nova Criatura Personalizada</h3>
+          <p id="modal-criatura-sub" class="text-[11px] text-indigo-400 font-semibold"></p>
+        </div>
+        <button onclick="closeModal('modal-criatura')" class="text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
+      </div>
+      <form id="form-criatura" onsubmit="salvarCriatura(event)" class="space-y-4">
+        <input type="hidden" id="cr-id">
+        <div id="criatura-campos-dinamicos" class="space-y-4"></div>
+        <div class="flex justify-end space-x-2 pt-2 border-t border-slate-800">
+          <button type="button" onclick="closeModal('modal-criatura')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm">Cancelar</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium">Salvar Criatura</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Facção (Criar e Editar) -->
+  <div id="modal-faccao" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-xl p-6 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 id="modal-faccao-titulo" class="font-bold text-lg text-slate-100">Nova Facção</h3>
+        <button onclick="closeModal('modal-faccao')" class="text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
+      </div>
+      <form id="form-faccao" onsubmit="salvarFaccao(event)" class="space-y-4">
+        <input type="hidden" id="f-edit-id">
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Nome</label>
+          <input type="text" id="f-nome" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Descrição</label>
+          <textarea id="f-descricao" rows="2" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"></textarea>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Reputação (-100 a +100)</label>
+          <input type="number" id="f-reputacao" min="-100" max="100" value="0" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" onclick="closeModal('modal-faccao')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm">Cancelar</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Evento -->
+  <div id="modal-evento" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-xl p-6 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-lg text-slate-100">Registrar Evento</h3>
+        <button onclick="closeModal('modal-evento')" class="text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
+      </div>
+      <form id="form-evento" onsubmit="salvarEvento(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Título</label>
+          <input type="text" id="e-titulo" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Descrição</label>
+          <textarea id="e-descricao" rows="3" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"></textarea>
+        </div>
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" onclick="closeModal('modal-evento')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm">Cancelar</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium">Registrar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
